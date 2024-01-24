@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "inari"
+version = "0.0.0"
+description = ""
+authors = []
+readme = "README.md"
+packages = [{include = "compiler", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pytest-testmon = "^2.1.0"
+
+[tool.poetry.group.dev.dependencies]
+autopep8 = "^2.0.4"
+mypy = "^1.7.0"
+pytest = "^7.4.2"
+
+[tool.poetry.scripts]
+main = "compiler.__main__:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+addopts = [
+    "--import-mode=importlib",
+]
+
+[virtualenvs]
+prefer-active-python = true
