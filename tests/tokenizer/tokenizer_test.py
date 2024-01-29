@@ -36,7 +36,7 @@ class TokenizerTest(unittest.TestCase):
         assert tokenize('if 3 <= 5 + 4') == [
             Token(location=LL, type='identifier', text='if'),
             Token(location=LL, type='int_literal', text='3'),
-            Token(location=LL, type='operator', text='<='),   
+            Token(location=LL, type='operator', text='<='),
             Token(location=LL, type='int_literal', text='5'),
             Token(location=LL, type='operator', text='+'),
             Token(location=LL, type='int_literal', text='4')
@@ -46,12 +46,19 @@ class TokenizerTest(unittest.TestCase):
         assert tokenize('if 3<= 5+4') == [
             Token(location=LL, type='identifier', text='if'),
             Token(location=LL, type='int_literal', text='3'),
-            Token(location=LL, type='operator', text='<='),   
+            Token(location=LL, type='operator', text='<='),
             Token(location=LL, type='int_literal', text='5'),
             Token(location=LL, type='operator', text='+'),
             Token(location=LL, type='int_literal', text='4')
         ]
     
+    def test_tokenizer_with_arithmetic_operations_without_spaces_2(self) -> None:
+        assert tokenize('1+2') == [
+            Token(location=LL, type='int_literal', text='1'),
+            Token(location=LL, type='operator', text='+'),
+            Token(location=LL, type='int_literal', text='2')
+        ]
+
     def test_tokenizer_complicated(self) -> None:
         assert tokenize('while a => (2+5+(2+5))/(x/y)# we add a comment here') == [
             Token(location=LL, type='identifier', text='while'),
