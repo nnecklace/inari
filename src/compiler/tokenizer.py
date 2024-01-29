@@ -13,15 +13,6 @@ regexes = {
     "punctuation": re.compile(r'(\(|\)|{|}|,|;)')
 }
 
-def create_token(
-        token: str,
-        type: str, 
-        file: str, 
-        line: int,
-        column: int
-) -> Token:
-    return Token(text=token, type=type, location=Location(file=file, line=line, column=column))
-
 def find_token(type: str, segment: str) -> list[tuple[int, int, str, str]]:
     return [{'start': match.start(), 'end': match.end(), 'group': match.group(), 'type': type} for match in regexes[type].finditer(segment)]
 
