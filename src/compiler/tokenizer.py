@@ -7,7 +7,7 @@ regexes = {
     "comment": re.compile(r'(/{2,}|#|;{2,}).*'),
     "whitespace": re.compile(r'\s'),
     "number": re.compile(r'[0-9]*'),
-    "identifier": re.compile(r'(^[^0-9]([a-z]|_))([a-z]|\d|_)*'),
+    "identifier": re.compile(r'\b[a-z_][a-z0-9_]*\b'),
     "int_literal": re.compile(r'[^-]?[0-9]'),
     "operator": re.compile(r'(\+|-|\*|/|==|!=|<=|=>|>|<|=)'),
     "punctuation": re.compile(r'(\(|\)|{|}|,|;)')
@@ -50,6 +50,16 @@ def tokenize(source_code: str) -> list[Token]:
 
         for match in matched_tokens:
             if match and match['type'] != 'whitespace':
-                tokens.append(create_token(match['group'], match['type'], '', line_num, match['start']))
+                tokens.append(
+                    Token(
+                        text=match['group'], 
+                        type=match['type'], 
+                        location=Location(
+                            file='',
+                            line=line_num, 
+                            column=match['start']
+                        )
+                    )
+                )
 
     return tokens
