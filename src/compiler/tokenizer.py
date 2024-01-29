@@ -8,7 +8,7 @@ regexes = {
     "whitespace": re.compile(r'\s'),
     "number": re.compile(r'[0-9]*'),
     "identifier": re.compile(r'(^[^0-9]([a-z]|_))([a-z]|\d|_)*'),
-    "non_negative_number": re.compile(r'[^-]?[0-9]'),
+    "int_literal": re.compile(r'[^-]?[0-9]'),
     "operator": re.compile(r'(\+|-|\*|/|==|!=|<=|=>|>|<|=)'),
     "punctuation": re.compile(r'(\(|\)|{|}|,|;)')
 }
@@ -22,8 +22,8 @@ def create_token(
 ) -> Token:
     return Token(text=token, type=type, location=Location(file=file, line=line, column=column))
 
-def tokenize_type(key: str, type: str, segment: str) -> list[tuple[int, int, str, str]]:
-    return [(match.start(), match.end(), match.group(), type) for match in regexes[key].finditer(segment)]
+def find_token(type: str, segment: str) -> list[tuple[int, int, str, str]]:
+    return [{'start': match.start(), 'end': match.end(), 'group': match.group(), 'type': type} for match in regexes[type].finditer(segment)]
 
 def tokenize(source_code: str) -> list[Token]:
     tokens = []
@@ -34,14 +34,14 @@ def tokenize(source_code: str) -> list[Token]:
             continue
 
         matched_tokens = sorted(
-            tokenize_type('identifier', 'identifier', line) +
-            tokenize_type('non_negative_number', 'int_literal', line) + 
-            tokenize_type('operator', 'operator', line) +
-            tokenize_type('punctuation', 'punctuation', line) +
-            tokenize_type('whitespace', 'whitespace', line)
-        )
+            find_token('identifier', line) +
+            find_token('int_literal', line) +
+            find_token('operator', line) +
+            find_token('punctuation', line) +
+            find_token('whitespace', line),
+        key=lambda token: token['start'])
 
-        matched_str = ''.join([token[2] if token else '' for token in matched_tokens])
+        matched_str = ''.join([token['group'] if token else '' for token in matched_tokens])
 
         err = re.compile(r'[^{}]'.format(re.escape(matched_str))).search(line)
 
@@ -49,7 +49,7 @@ def tokenize(source_code: str) -> list[Token]:
             raise ValueError(f'Unidentified pattern in line: {line} character: {line[err.start()]}\n{(line+'\n')+''.join([' ' for _ in range(err.start())])}^')
 
         for match in matched_tokens:
-            if match and match[3] != 'whitespace':
-                tokens.append(create_token(match[2], match[3], '', line_num, match[0]))
+            if match and match['type'] != 'whitespace':
+                tokens.append(create_token(match['group'], match['type'], '', line_num, match['start']))
 
     return tokens
