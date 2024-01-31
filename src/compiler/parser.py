@@ -1,5 +1,5 @@
 from compiler.tokenizer import Token
-from compiler.ast import Expression, BinaryOp, Literal, Identifier
+from compiler.ast import Expression, BinaryOp, Literal, Identifier, IfThenElse
 
 def peek(tokens: list[Token]) -> Token:
     if tokens:
@@ -31,7 +31,21 @@ def parse_identifier(tokens: list[Token]) -> Identifier:
     if peek(tokens).type != 'identifier':
         raise Exception(f'{peek(tokens).location}: expected an identifier')
     token = pop_expected(tokens)
-    return Literal(int(token.text))
+    return Identifier(token.text)
+
+def parse_if_then_else(tokens: list[Token]) -> Expression:
+    pop_expected(tokens, 'if')
+    cond = parse_expression(tokens)
+    pop_expected(tokens, 'then')
+    then = parse_expression(tokens)
+
+    if_then_else = IfThenElse(cond=cond, then=then)
+
+    if peek(tokens).text == 'else':
+        pop_expected(tokens, 'else')
+        if_then_else.otherwise = parse_expression(tokens)
+
+    return if_then_else
 
 def parse_factor(tokens: list[Token]) -> Expression:
     if peek(tokens).text == '(':
@@ -39,7 +53,10 @@ def parse_factor(tokens: list[Token]) -> Expression:
     elif peek(tokens).type == 'int_literal':
         return parse_int_literal(tokens)
     elif peek(tokens).type == 'identifier':
-        return parse_identifier(tokens)
+        if peek(tokens).text == 'if':
+            return parse_if_then_else(tokens)
+        else:
+            return parse_identifier(tokens)
     else:
         raise Exception(f'{peek(tokens).location}: expected an integer literal or an identifier')
 
@@ -56,7 +73,7 @@ def parse_term(tokens: list[Token]) -> Expression:
         left = BinaryOp(
             left,
             pop_expected(tokens).text, # operator
-            parse_term(tokens) # right term
+            parse_factor(tokens) # right term
         )
 
     return left
@@ -75,4 +92,9 @@ def parse_expression(tokens: list[Token]) -> BinaryOp:
 
 def parse(tokens: list[Token]) -> Expression:
     tokens.reverse()
-    return parse_expression(tokens)
+    expr = parse_expression(tokens)
+
+    if tokens:
+        raise Exception(f'Unparsable exception, tokens left unparsed {tokens}')
+
+    return expr

@@ -59,6 +59,27 @@ class TokenizerTest(unittest.TestCase):
             Token(location=LL, type='int_literal', text='2')
         ]
 
+    def test_tokenizer_with_arithmetic_operations_without_spaces_and_only_identifiers(self) -> None:
+        assert tokenize('a+b') == [
+            Token(location=LL, type='identifier', text='a'),
+            Token(location=LL, type='operator', text='+'),
+            Token(location=LL, type='identifier', text='b')
+        ]
+
+    def test_tokenizer_with_arithmetic_operations_without_spaces_and_only_identifiers_and_punctuation(self) -> None:
+        assert tokenize('{a+b;c-d,}') == [
+            Token(location=LL, type='punctuation', text='{'),
+            Token(location=LL, type='identifier', text='a'),
+            Token(location=LL, type='operator', text='+'),
+            Token(location=LL, type='identifier', text='b'),
+            Token(location=LL, type='punctuation', text=';'),
+            Token(location=LL, type='identifier', text='c'),
+            Token(location=LL, type='operator', text='-'),
+            Token(location=LL, type='identifier', text='d'),
+            Token(location=LL, type='punctuation', text=','),
+            Token(location=LL, type='punctuation', text='}')
+        ]
+
     def test_tokenizer_complicated(self) -> None:
         assert tokenize('while a => (2+5+(2+5))/(x/y)# we add a comment here') == [
             Token(location=LL, type='identifier', text='while'),

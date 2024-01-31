@@ -25,6 +25,14 @@ class Identifier(Expression):
         return self.name == other.name
 
 @dataclass
+class IfThenElse(Expression):
+    """AST node for If then else operation like `if a then b else c`"""
+    cond: Expression
+    then: Expression
+    otherwise: Expression = None
+    name: str = 'if'
+
+@dataclass
 class BinaryOp(Expression):
     """AST node for a binary operation like `A + B`"""
     left: Expression
