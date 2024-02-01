@@ -115,3 +115,31 @@ class TokenizerTest(unittest.TestCase):
             Token(location=LL, type='identifier', text='y'),
             Token(location=LL, type='punctuation', text=')')
         ]
+    
+    def test_tokenizer_operators(self) -> None:
+        assert tokenize('((-2)+3)-6*3%7/1<5>=100<=1000!=5') == [
+            Token(location=LL, type='punctuation', text='('),
+            Token(location=LL, type='punctuation', text='('),
+            Token(location=LL, type='operator', text='-'),
+            Token(location=LL, type='int_literal', text='2'),
+            Token(location=LL, type='punctuation', text=')'),
+            Token(location=LL, type='operator', text='+'),
+            Token(location=LL, type='int_literal', text='3'),
+            Token(location=LL, type='punctuation', text=')'),
+            Token(location=LL, type='operator', text='-'),
+            Token(location=LL, type='int_literal', text='6'),
+            Token(location=LL, type='operator', text='*'),
+            Token(location=LL, type='int_literal', text='3'),
+            Token(location=LL, type='operator', text='%'),
+            Token(location=LL, type='int_literal', text='7'),
+            Token(location=LL, type='operator', text='/'),
+            Token(location=LL, type='int_literal', text='1'),
+            Token(location=LL, type='operator', text='<'),
+            Token(location=LL, type='int_literal', text='5'),
+            Token(location=LL, type='operator', text='>='),
+            Token(location=LL, type='int_literal', text='100'),
+            Token(location=LL, type='operator', text='<='),
+            Token(location=LL, type='int_literal', text='1000'),
+            Token(location=LL, type='operator', text='!='),
+            Token(location=LL, type='int_literal', text='5')
+        ]
