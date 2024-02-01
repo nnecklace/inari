@@ -9,7 +9,7 @@ regexes = {
     "number": re.compile(r'[0-9]*'),
     "identifier": re.compile(r'\b[a-z_][a-z0-9_]*\b'),
     "int_literal": re.compile(r'\d+'),
-    "operator": re.compile(r'(\+|-|\*|/|==|!=|<=|=>|>|<|=)'),
+    "operator": re.compile(r'(\+|-|%|\*|/|==|!=|<=|>=|>|<|=)'),
     "punctuation": re.compile(r'(\(|\)|{|}|,|;)')
 }
 
