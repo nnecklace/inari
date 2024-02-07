@@ -33,6 +33,33 @@ class IfThenElse(Expression):
     name: str = 'if'
 
 @dataclass
+class While(Expression):
+    cond: Expression
+    body: Expression
+
+@dataclass
+class Var():
+    name: Identifier
+    initialization: Expression
+
+@dataclass
+class FuncCall(Expression):
+    """AST node for function calls"""
+    args: list[Expression]
+    name: str
+
+@dataclass
+class Block(Expression):
+    """AST node to represent blocks"""
+    statements: list[Expression]
+
+@dataclass
+class UnaryOp(Expression):
+    """AST node for unary operator like `not -1`"""
+    op: str
+    right: Expression
+
+@dataclass
 class BinaryOp(Expression):
     """AST node for a binary operation like `A + B`"""
     left: Expression
