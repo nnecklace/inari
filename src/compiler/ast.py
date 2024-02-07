@@ -53,6 +53,16 @@ class Block(Expression):
     """AST node to represent blocks"""
     statements: list[Expression]
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Block):
+            return NotImplemented
+
+        for obj in other.statements:
+            if obj not in self.statements:
+                return False
+
+        return True
+
 @dataclass
 class UnaryOp(Expression):
     """AST node for unary operator like `not -1`"""

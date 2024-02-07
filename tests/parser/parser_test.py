@@ -1,6 +1,6 @@
 from compiler.parser import parse
 from compiler.tokenizer import tokenize
-from compiler.ast import Expression, BinaryOp, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, Block
+from compiler.ast import Expression, BinaryOp, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, Block, Var
 
 import unittest
 
@@ -190,6 +190,16 @@ class ParserTest(unittest.TestCase):
             ),
             op='<',
             right=UnaryOp(op='-', right=Literal(5))
+        )
+
+    def test_parse_top_level_vars(self):
+        assert parse(tokenize('var a = 1;var b = 2; var c = 3; var d = 4')) == Block(
+            statements=[
+                Var(name=Identifier('a'), initialization=Literal(1)),
+                Var(name=Identifier('b'), initialization=Literal(2)),
+                Var(name=Identifier('c'), initialization=Literal(3)),
+                Var(name=Identifier('d'), initialization=Literal(4))
+            ]
         )
 
     def test_parse_block_simple(self):
