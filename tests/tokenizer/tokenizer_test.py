@@ -29,6 +29,14 @@ class TokenizerTest(unittest.TestCase):
             Token(location=LL, type='identifier', text='while')
         ]
 
+    def test_tokenizer_bools(self) -> None:
+        assert tokenize('if true then false') == [
+            Token(location=LL, type='identifier', text='if'),
+            Token(location=LL, type='bool_literal', text='true'),
+            Token(location=LL, type='identifier', text='then'),
+            Token(location=LL, type='bool_literal', text='false')
+        ]
+
     def test_tokenizer_raise_error(self) -> None:
         self.assertRaises(ValueError, tokenize, '2+3*5?')
 
@@ -114,6 +122,28 @@ class TokenizerTest(unittest.TestCase):
             Token(location=LL, type='operator', text='/'),
             Token(location=LL, type='identifier', text='y'),
             Token(location=LL, type='punctuation', text=')')
+        ]
+
+    def test_tokenizer_recognizes_blocks(self):
+        assert tokenize('{}') == [
+            Token(location=LL, type='punctuation', text='{'),
+            Token(location=LL, type='punctuation', text='}')
+        ]
+
+    def test_tokenizer_recognizes_blocks_with_semi_colon(self):
+        assert tokenize('{};') == [
+            Token(location=LL, type='punctuation', text='{'),
+            Token(location=LL, type='punctuation', text='}'),
+            Token(location=LL, type='punctuation', text=';')
+        ]
+
+    def test_tokenizer_multiple_punctuations(self):
+        assert tokenize('{ b };;') == [
+            Token(location=LL, type='punctuation', text='{'),
+            Token(location=LL, type='identifier', text='b'),
+            Token(location=LL, type='punctuation', text='}'),
+            Token(location=LL, type='punctuation', text=';'),
+            Token(location=LL, type='punctuation', text=';')
         ]
     
     def test_tokenizer_operators(self) -> None:

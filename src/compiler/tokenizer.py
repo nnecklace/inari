@@ -1,14 +1,15 @@
-import re
+import regex as re
 from compiler.token import Token
 from compiler.location import Location
 
 # Regexes
 regexes = {
-    "comment": re.compile(r'(/{2,}|#|;{2,}).*'),
+    "comment": re.compile(r'(/{2,}|#).*'),
     "whitespace": re.compile(r'\s'),
     "number": re.compile(r'[0-9]*'),
-    "identifier": re.compile(r'\b[a-z_][a-z0-9_]*\b'),
+    "identifier": re.compile(r'\b[a-z_][a-z0-9_]*\b(?<!\btrue|\bfalse)'),
     "int_literal": re.compile(r'\d+'),
+    "bool_literal": re.compile(r'\b(true|false)'), # check this
     "operator": re.compile(r'(\+|-|%|\*|/|==|!=|<=|>=|>|<|=)'),
     "punctuation": re.compile(r'(\(|\)|{|}|,|;)')
 }
@@ -25,8 +26,9 @@ def tokenize(source_code: str) -> list[Token]:
             continue
 
         matched_tokens = sorted(
-            find_token('identifier', line) +
             find_token('int_literal', line) +
+            find_token('bool_literal', line) +
+            find_token('identifier', line) +
             find_token('operator', line) +
             find_token('punctuation', line) +
             find_token('whitespace', line),
