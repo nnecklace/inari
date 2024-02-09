@@ -60,7 +60,7 @@ class ParserTest(unittest.TestCase):
             left=Literal(1),
             op='+',
             right=IfThenElse(
-                cond=Identifier('true'),
+                cond=Literal(True),
                 then=Literal(2),
                 otherwise=Literal(3)
             )
@@ -123,7 +123,6 @@ class ParserTest(unittest.TestCase):
             right=Literal(3)
         )
 
-    # ((-2)+3)-6*3
     def test_parse_expression_with_unary_op_and_binaries(self):
         assert parse(tokenize('((-2)+3)-6')) == BinaryOp(
             left=BinaryOp(
@@ -212,6 +211,78 @@ class ParserTest(unittest.TestCase):
                 FuncCall(name='f', args=[Identifier('x')]),
                 Literal(value=None)
             ]))
+
+    def test_parse_block_simple_2(self):
+        assert parse(tokenize('x = {y;z}')) == BinaryOp(
+            left=Identifier('x'), 
+            op='=', 
+            right=Block(statements=[
+                Identifier('y'),
+                Identifier('z'),
+            ]))
+
+    def test_parse_inner_blocks(self):
+        assert parse(tokenize('{ { a } { b } }')) == Block(
+            statements=[
+                Block(statements=[Identifier('a')]), 
+                Block(statements=[Identifier('b')])
+            ]
+        )
+
+    def test_parse_blocks_with_ifs(self):
+        assert parse(tokenize('{ if true then { a }; b }')) == Block(
+            statements=[
+                IfThenElse(
+                    cond=Literal(True), 
+                    then=Block(statements=[Identifier('a')])
+                ),
+                Identifier('b')
+            ]
+        )
+
+    def test_parse_blocks_with_ifs_without_semi_colon(self):
+        assert parse(tokenize('{ if true then { a } b }')) == Block(
+            statements=[
+                IfThenElse(
+                    cond=Literal(True), 
+                    then=Block(statements=[Identifier('a')])
+                ),
+                Identifier('b')
+            ]
+        )
+
+    def test_parse_block_with_ifs_and_expressions(self):
+        assert parse(tokenize('{ if true then { a } b; c }')) == Block(
+            statements=[
+                IfThenElse(cond=Literal(True), then=Block(statements=[Identifier('a')])),
+                Identifier('b'),
+                Identifier('c')
+            ]
+        )
+
+    def test_parse_block_with_ifs_else_and_expressions(self):
+        assert parse(tokenize('{ if true then { a } else { b } c }')) == Block(
+            statements=[
+                IfThenElse(cond=Literal(True), then=Block(statements=[Identifier('a')]), otherwise=Block(statements=[Identifier('b')])),
+                Identifier('c')
+            ]
+        )
+    
+    def test_parse_block_assignment_with_inner_blocks(self):
+        assert parse(tokenize('x = { { f(a) } { b } }')) == BinaryOp(
+            left=Identifier('x'),
+            op='=',
+            right=Block(statements=[Block(statements=[FuncCall(args=[Identifier('a')], name='f')]), Block(statements=[Identifier('b')])])
+        )
+    
+    def test_parse_erroneous_block(self):
+        self.assertRaises(Exception, parse, tokenize('{ a b }'))
+
+    def test_parse_erroneous_if_within_block(self):
+        self.assertRaises(Exception, parse, tokenize('{ if true then { a } b c }'))
+
+    def test_parse_erroneous_double_semi_colon(self):
+        self.assertRaises(Exception, parse, tokenize('while { a } do { b };;'))
 
     def test_parse_erroneous_input(self):
         self.assertRaises(Exception, parse, tokenize('a + b c'))

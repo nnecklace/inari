@@ -145,7 +145,7 @@ class TokenizerTest(unittest.TestCase):
             Token(location=LL, type='punctuation', text=';'),
             Token(location=LL, type='punctuation', text=';')
         ]
-    
+
     def test_tokenizer_operators(self) -> None:
         assert tokenize('((-2)+3)-6*3%7/1<5>=100<=1000!=5') == [
             Token(location=LL, type='punctuation', text='('),
