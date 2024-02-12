@@ -16,7 +16,7 @@ def peek(tokens: list[Token]) -> Token:
     else:
         return Token(location=-1, type='end', text='')
 
-def pop_next(tokens: list[Token], expected: str | list[str] | None = None) -> Token:
+def pop_next(tokens: list[Token], expected: str | None = None) -> Token:
     if peek(tokens).type == 'end':
         raise Exception(f'Expected a token, all tokens have been consumed')
         
@@ -24,27 +24,24 @@ def pop_next(tokens: list[Token], expected: str | list[str] | None = None) -> To
 
     if isinstance(expected, str) and token.text != expected:
         raise Exception(f'{token.location}: expected "{expected}"')
-    if isinstance(expected, list) and token.text not in expected:
-        comma_separated = ", ".join([f'"{e}"' for e in expected])
-        raise Exception(f'{token.location}: expected one of: {comma_separated}')
 
     return token
 
 def parse_bool_literal(tokens: list[Token]) -> Literal:
-    if peek(tokens).type != 'bool_literal':
-        raise Exception(f'{peek(tokens).location}: expected an integer literal')
-    return Literal(bool(pop_next(tokens).text))
+    next = pop_next(tokens).text
+    if next.lower() == 'true':
+        return Literal(True)
+
+    if next.lower() == 'false':
+        return Literal(False)
+
+    raise Exception(f'Expected either true or false, got {next}')
 
 def parse_int_literal(tokens: list[Token]) -> Literal:
-    if peek(tokens).type != 'int_literal':
-        raise Exception(f'{peek(tokens).location}: expected an integer literal')
     return Literal(int(pop_next(tokens).text))
 
 def parse_identifier(tokens: list[Token]) -> Identifier:
-    if peek(tokens).type != 'identifier':
-        raise Exception(f'{peek(tokens).location}: expected an identifier')
-    token = pop_next(tokens)
-    return Identifier(token.text)
+    return Identifier(pop_next(tokens).text)
 
 def parse_if_then_else(tokens: list[Token]) -> Expression:
     pop_next(tokens, 'if')
@@ -92,12 +89,15 @@ def parse_vars(tokens: list[Token]) -> Block | Var:
         pop_next(tokens, ';')
         block = Block([])
         block.statements.append(var)
+        semi_colon_count = 1
         while peek(tokens).text == 'var' and peek(tokens).type != 'end':
             block.statements.append(parse_var(tokens))
             if peek(tokens).text == ';':
                 pop_next(tokens, ';')
-                if peek(tokens).text != 'var':
-                    block.statements.append(Literal(None))
+                semi_colon_count += 1
+
+        if semi_colon_count == len(block.statements):
+            block.statements.append(Literal(None))
 
         return block
 
@@ -118,7 +118,7 @@ def parse_var(tokens: list[Token]) -> Var:
 
     following = peek(tokens)
 
-    if following.text != ';' and following.type != 'end':
+    if following.text != ';' and following.type != 'end' and following.text != '}':
         raise Exception(f'Expected ; after var declaration instead found {following.text}')
 
     return Var(
@@ -140,7 +140,7 @@ def prev_ended_with_block(expr: Expression) -> bool:
 def parse_block(tokens: list[Token], top_level_block: bool = False) -> Expression:
     match_closing_bracket = False
 
-    if not top_level_block or peek(tokens).text == '{':
+    if peek(tokens).text == '{':
         match_closing_bracket = True
         pop_next(tokens, '{')
 
@@ -151,6 +151,7 @@ def parse_block(tokens: list[Token], top_level_block: bool = False) -> Expressio
             statements.append(parse_block(tokens))
             if peek(tokens).text == ';':
                 pop_next(tokens, ';')
+                semi_colon_count += 1
             if peek(tokens).text == '}':
                 break
             else:
@@ -171,6 +172,9 @@ def parse_block(tokens: list[Token], top_level_block: bool = False) -> Expressio
 
     if semi_colon_count == len(statements):
         statements.append(Literal(value=None))
+
+    if top_level_block and len(statements) == 1:
+        return statements[0]
 
     return Block(statements=statements)
 
@@ -211,7 +215,7 @@ def parse_function_call(identifier: Identifier, tokens: list[Token]) -> FuncCall
     args = []
     pop_next(tokens, '(')
     while peek(tokens).text != ')':
-        if peek(tokens).type == 'end':
+        if peek(tokens).meta == 'end' or peek(tokens).type == 'end':
             raise Exception(f'{peek(tokens).location}: expected )')
         args.append(parse_expression(tokens))
         if peek(tokens).text == ',':
@@ -264,7 +268,7 @@ def parse_expression(tokens: list[Token]) -> Expression:
 
     return left
 
-def parse_block_or_expression(tokens: list[Token], top_level_block: bool = False) -> Expression:
+def parse_block_or_expression(tokens: list[Token]) -> Expression:
     if peek(tokens).text == '{':
         return parse_block(tokens)
     else:
@@ -272,11 +276,7 @@ def parse_block_or_expression(tokens: list[Token], top_level_block: bool = False
 
 def parse(tokens: list[Token]) -> Expression:
     tokens.reverse()
-    print([token.text for token in tokens])
-    root = parse_block_or_expression(tokens, True)
-
-    if isinstance(root, Block) and peek(tokens).text == ';':
-        pop_next(tokens, ';')
+    root = parse_block(tokens, True)
 
     if tokens:
         raise Exception(f'Unparsable exception, tokens left unparsed {tokens}')

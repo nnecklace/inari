@@ -1,6 +1,6 @@
 from compiler.parser import parse
 from compiler.tokenizer import tokenize
-from compiler.ast import Expression, BinaryOp, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, Block, Var
+from compiler.ast import Expression, BinaryOp, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, Block, Var, While
 
 import unittest
 
@@ -115,6 +115,9 @@ class ParserTest(unittest.TestCase):
     
     def test_parse_unary_op(self):
         assert parse(tokenize('-2')) == UnaryOp(right=Literal(2), op='-')
+
+    def test_parse_unary_op_not(self):
+        assert parse(tokenize('not false')) == UnaryOp(right=Literal(False), op='not')
     
     def test_parse_expression_with_unary_op(self):
         assert parse(tokenize('((-2)+3)')) == BinaryOp(
@@ -201,6 +204,18 @@ class ParserTest(unittest.TestCase):
             ]
         )
 
+    def test_parse_single_var(self):
+        assert parse(tokenize('var a = 1')) == Var(name=Identifier('a'), initialization=Literal(1))
+
+    def test_parse_single_var_with_semi_colon(self):
+        assert parse(tokenize('var a = 1;')) == Block(statements=[Var(name=Identifier('a'), initialization=Literal(1)), Literal(None)])
+
+    def test_parse_doublw_vars(self):
+        assert parse(tokenize('var a = 1;var b=2')) == Block(statements=[Var(name=Identifier('a'), initialization=Literal(1)), Var(name=Identifier('b'), initialization=Literal(2))])
+
+    def test_parse_double_vars_with_semi_colon(self):
+        assert parse(tokenize('var a = 1;var b=2;')) == Block(statements=[Var(name=Identifier('a'), initialization=Literal(1)), Var(name=Identifier('b'), initialization=Literal(2)), Literal(None)])
+
     def test_parse_block_simple(self):
         assert parse(tokenize('x = {f(a);x = y;f(x);}')) == BinaryOp(
             left=Identifier('x'), 
@@ -223,6 +238,14 @@ class ParserTest(unittest.TestCase):
 
     def test_parse_inner_blocks(self):
         assert parse(tokenize('{ { a } { b } }')) == Block(
+            statements=[
+                Block(statements=[Identifier('a')]), 
+                Block(statements=[Identifier('b')])
+            ]
+        )
+
+    def test_parse_inner_blocks_with_semi_colons(self):
+        assert parse(tokenize('{ { a }; { b } }')) == Block(
             statements=[
                 Block(statements=[Identifier('a')]), 
                 Block(statements=[Identifier('b')])
@@ -275,6 +298,50 @@ class ParserTest(unittest.TestCase):
             right=Block(statements=[Block(statements=[FuncCall(args=[Identifier('a')], name='f')]), Block(statements=[Identifier('b')])])
         )
     
+    def test_parse_parens_with_block(self):
+        assert parse(tokenize('({})')) == Block(statements=[])
+    
+    def test_parse_blocks_with_while_blocks(self):
+        assert parse(tokenize('{while false do {b;};}')) == Block(statements=[
+            While(cond=Literal(False), body=Block(statements=[Identifier('b'), Literal(None)])),
+            Literal(None)
+        ])
+    
+    def test_parse_blocks_with_parens_and_functions(self):
+        assert parse(tokenize('{a = (1+2)/3; fun(a,y)}')) == Block(statements=[
+            BinaryOp(
+                left=Identifier('a'), 
+                op='=', 
+                right=BinaryOp(
+                    left=BinaryOp(
+                        left=Literal(1), 
+                        op='+', 
+                        right=Literal(2)
+                    ), 
+                    op='/',
+                    right=Literal(3)
+                )
+            ),
+            FuncCall(name='fun', args=[Identifier('a'), Identifier('y')])
+        ])
+    
+    def test_parse_if_then_else_with_blocks(self):
+        assert parse(tokenize('if true then 1 else {a};')) == Block(
+            statements=[
+                IfThenElse(cond=Literal(True), then=Literal(1), otherwise=Block(statements=[Identifier('a')])),
+                Literal(None)
+            ]
+        )
+
+    def test_parse_var_with_block(self):
+        assert parse(tokenize('var a = {1+1};')) == Block(statements=[Var(name=Identifier('a'), initialization=Block(statements=[BinaryOp(left=Literal(1), op='+', right=Literal(1))])), Literal(None)])
+
+    def test_parse_binary_op_with_block(self):
+        assert parse(tokenize('a = {1+1};')) == BinaryOp(left=Identifier('a'), op='=', right=Block(statements=[BinaryOp(left=Literal(1), op='+', right=Literal(1))]))
+
+    def test_parse_top_level_with_block(self):
+        assert parse(tokenize('{};')) == Block(statements=[Block(statements=[]), Literal(None)])
+    
     def test_parse_erroneous_block(self):
         self.assertRaises(Exception, parse, tokenize('{ a b }'))
 
@@ -292,3 +359,15 @@ class ParserTest(unittest.TestCase):
 
     def test_parse_erroneous_input_3(self):
         self.assertRaises(Exception, parse, tokenize('(12 + b) * 2 / (2 + 2) ** 2'))
+
+    def test_parse_erroneous_var(self):
+        self.assertRaises(Exception, parse, tokenize('var 1 = 2'))
+
+    def test_parse_erroneous_vars(self):
+        self.assertRaises(Exception, parse, tokenize('var a = b var g = 1'))
+
+    def test_parse_erroneous_func_call(self):
+        self.assertRaises(Exception, parse, tokenize('f(x'))
+
+    def test_parse_erroneous_func_call_2(self):
+        self.assertRaises(Exception, parse, tokenize('f(x,y'))

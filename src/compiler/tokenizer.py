@@ -18,7 +18,8 @@ def find_token(type: str, segment: str) -> list[tuple[int, int, str, str]]:
     return [{'start': match.start(), 'end': match.end(), 'group': match.group(), 'type': type} for match in regexes[type].finditer(segment)]
 
 def tokenize(source_code: str) -> list[Token]:
-    tokens = []
+    tokens = [Token( text='{', type='punctuation', location=Location('', 0, 0), meta='start')]
+
     for line_num, line in enumerate(source_code.splitlines()):
         line = regexes['comment'].sub('', line).strip() # just remove all comments from each line
 
@@ -54,5 +55,7 @@ def tokenize(source_code: str) -> list[Token]:
                         )
                     )
                 )
+
+    tokens.append(Token(text='}', type='punctuation', location=Location('', tokens[-1].location.line+1, tokens[-1].location.column+1), meta='end'))
 
     return tokens
