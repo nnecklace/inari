@@ -38,7 +38,7 @@ class While(Expression):
     body: Expression
 
 @dataclass
-class Var():
+class Var(Expression):
     name: Identifier
     initialization: Expression
 
