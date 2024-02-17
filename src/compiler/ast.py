@@ -3,6 +3,7 @@ from dataclasses import dataclass
 @dataclass
 class Expression:
     """Base class for AST nodes representing expressions."""
+    # TODO: Add Location to expression
 
 @dataclass
 class Literal(Expression):
@@ -52,6 +53,8 @@ class FuncCall(Expression):
 class Block(Expression):
     """AST node to represent blocks"""
     statements: list[Expression]
+
+    ended_with_semi_colon: bool = False
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Block):

@@ -333,6 +333,42 @@ class ParserTest(unittest.TestCase):
             ]
         )
 
+    def test_parse_while_with_blocks(self):
+        assert parse(tokenize('while true do {a}')) == While(cond=Literal(True), body=Block(statements=[Identifier('a')]))
+    
+    def test_parse_while_with_blocks_and_semi_colon(self):
+        assert parse(tokenize('while true do {a};')) == Block(
+            statements=[
+                While(cond=Literal(True), body=Block(statements=[Identifier('a')])),
+                Literal(None)
+            ]
+        )
+    
+    def test_parse_while_with_blocks_and_semi_colons(self):
+        assert parse(tokenize('while true do {a;};')) == Block(
+            statements=[
+                While(cond=Literal(True), body=Block(statements=[Identifier('a'), Literal(None)])),
+                Literal(None)
+            ]
+        )
+    
+    def test_parse_while_with_var_and_blocks_and_semi_colons(self):
+        assert parse(tokenize('{var a = 1; while true do {a}}')) == Block(
+            statements=[
+                Var(name=Identifier('a'),initialization=Literal(1)),
+                While(cond=Literal(True), body=Block(statements=[Identifier('a')]))
+            ]
+        )
+
+    def test_parse_while_with_var_and_blocks_and_semi_colons_and_reassigns(self):
+        assert parse(tokenize('var x = 1; while x<3 do {x=x+1}')) == Block(
+            statements=[
+                Var(name=Identifier('x'),initialization=Literal(1)),
+                While(cond=BinaryOp(left=Identifier('x'), op='<', right=Literal(3)), 
+                      body=Block(statements=[BinaryOp(left=Identifier('x'), op='=', right=BinaryOp(left=Identifier('x'), op='+', right=Literal(1)))]))
+            ]
+        )
+
     def test_parse_var_with_block(self):
         assert parse(tokenize('var a = {1+1};')) == Block(statements=[Var(name=Identifier('a'), initialization=Block(statements=[BinaryOp(left=Literal(1), op='+', right=Literal(1))])), Literal(None)])
 
@@ -341,6 +377,9 @@ class ParserTest(unittest.TestCase):
 
     def test_parse_top_level_with_block(self):
         assert parse(tokenize('{};')) == Block(statements=[Block(statements=[]), Literal(None)])
+    
+    def test_parse_block_with_var(self):
+        assert parse(tokenize('{var a = 1+1; 1+a}')) == Block(statements=[Var(name=Identifier('a'), initialization=BinaryOp(left=Literal(1), op='+', right=Literal(1))), BinaryOp(left=Literal(1), op='+', right=Identifier('a'))])
     
     def test_parse_erroneous_block(self):
         self.assertRaises(Exception, parse, tokenize('{ a b }'))

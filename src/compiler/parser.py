@@ -82,6 +82,7 @@ def parse_while(tokens: list[Token]) -> Expression:
         body=body
     )
 
+# check if needed
 def parse_vars(tokens: list[Token]) -> Block | Var:
     var = parse_var(tokens)
 
@@ -126,16 +127,30 @@ def parse_var(tokens: list[Token]) -> Var:
         initialization=initialization
     )
 
-def prev_ended_with_block(expr: Expression) -> bool:
+def ended_with_block(expr: Expression) -> bool:
     if isinstance(expr, IfThenElse):
         if expr.otherwise and isinstance(expr.otherwise, Block):
             return True
         if expr.then and isinstance(expr.then, Block):
             return True
+
     if isinstance(expr, While) and isinstance(expr.body, Block):
         return True
 
     return False
+
+def ended_with_semi_colon(expr: Expression) -> bool:
+    if isinstance(expr, IfThenElse):
+        if expr.otherwise and isinstance(expr.otherwise, Block) and expr.otherwise.ended_with_semi_colon:
+            return True
+        if expr.then and isinstance(expr.then, Block) and expr.then.ended_with_semi_colon:
+            return True
+
+    if isinstance(expr, While) and isinstance(expr.body, Block) and expr.body.ended_with_semi_colon:
+        return True
+
+    return False
+
 
 def parse_block(tokens: list[Token], top_level_block: bool = False) -> Expression:
     match_closing_bracket = False
@@ -159,7 +174,7 @@ def parse_block(tokens: list[Token], top_level_block: bool = False) -> Expressio
         else:
             statements.append(parse_expression(tokens))
 
-            if prev_ended_with_block(statements[-1]):
+            if ended_with_block(statements[-1]):
                 semi_colon_count += 1
             elif peek(tokens).text == ';':
                 pop_next(tokens, ';')
@@ -171,12 +186,15 @@ def parse_block(tokens: list[Token], top_level_block: bool = False) -> Expressio
         pop_next(tokens, '}')
 
     if semi_colon_count == len(statements):
-        statements.append(Literal(value=None))
+        if len(statements) == 0 or not ended_with_block(statements[-1]):
+            statements.append(Literal(None))
+        elif ended_with_block(statements[-1]) and ended_with_semi_colon(statements[-1]):
+            statements.append(Literal(None))
 
     if top_level_block and len(statements) == 1:
         return statements[0]
 
-    return Block(statements=statements)
+    return Block(statements=statements, ended_with_semi_colon=(peek(tokens).text == ';'))
 
 def parse_factor(tokens: list[Token]) -> Expression:
     text = peek(tokens).text
@@ -195,7 +213,7 @@ def parse_factor(tokens: list[Token]) -> Expression:
         elif text == 'while':
             return parse_while(tokens)
         elif text == 'var':
-            return parse_vars(tokens)
+            return parse_var(tokens)
         elif text  == 'not':
             return parse_unary_op(tokens)
         else:
