@@ -1,6 +1,7 @@
 from compiler.parser import parse
 from compiler.tokenizer import tokenize
-from compiler.interpreter import interpret, top_level_symbol_table
+from compiler.interpreter import interpret
+from compiler.types import get_global_symbol_table
 from compiler.ast import Expression
 
 import unittest
@@ -9,7 +10,7 @@ def p(input: str) -> Expression:
     return parse(tokenize(input))
 
 def sym_table():
-    return top_level_symbol_table
+    return get_global_symbol_table()
 
 class InterpreterTest(unittest.TestCase):
     def test_interpret_simple(self):

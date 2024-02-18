@@ -1,6 +1,7 @@
 from compiler.parser import parse
 from compiler.tokenizer import tokenize
 from compiler.ast import Expression, BinaryOp, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, Block, Var, While
+from compiler.types import Int, Unknown
 
 import unittest
 
@@ -381,6 +382,12 @@ class ParserTest(unittest.TestCase):
     def test_parse_block_with_var(self):
         assert parse(tokenize('{var a = 1+1; 1+a}')) == Block(statements=[Var(name=Identifier('a'), initialization=BinaryOp(left=Literal(1), op='+', right=Literal(1))), BinaryOp(left=Literal(1), op='+', right=Identifier('a'))])
     
+    def test_parse_variable_with_type(self):
+        assert parse(tokenize('var test: Int = true')) == Var(name=Identifier('test'), declared_type=Int, initialization=Literal(True))
+
+    def test_parse_variable_with_unknown_type(self):
+        assert parse(tokenize('var test: int = true')) == Var(name=Identifier('test'), declared_type=Unknown, initialization=Literal(True))
+
     def test_parse_erroneous_block(self):
         self.assertRaises(Exception, parse, tokenize('{ a b }'))
 

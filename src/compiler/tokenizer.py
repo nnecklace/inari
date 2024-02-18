@@ -7,11 +7,11 @@ regexes = {
     "comment": re.compile(r'(/{2,}|#).*'),
     "whitespace": re.compile(r'\s'),
     "number": re.compile(r'[0-9]*'),
-    "identifier": re.compile(r'\b[a-z_][a-z0-9_]*\b(?<!\btrue|\bfalse)'),
+    "identifier": re.compile(r'\b[A-Za-z_][A-Za-z0-9_]*\b(?<!\btrue|\bfalse)'),
     "int_literal": re.compile(r'\d+'),
     "bool_literal": re.compile(r'\b(true|false)'), # check this
     "operator": re.compile(r'(\+|-|%|\*|/|==|!=|<=|>=|>|<|=)'),
-    "punctuation": re.compile(r'(\(|\)|{|}|,|;)')
+    "punctuation": re.compile(r'(\(|\)|{|}|,|;|:)')
 }
 
 def find_token(type: str, segment: str) -> list[tuple[int, int, str, str]]:

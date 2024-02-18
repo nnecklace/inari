@@ -1,5 +1,6 @@
 from compiler.tokenizer import Token
 from compiler.ast import Expression, BinaryOp, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, While, Var, Block
+from compiler.types import get_type_from_str
 
 left_associative_binary_operators = [
     ['*', '/', '%'],
@@ -112,6 +113,14 @@ def parse_var(tokens: list[Token]) -> Var:
         raise Exception(f'{following.location}: expected an identifier got {following.type}')
 
     initialization = None
+    declared_type = None
+
+    if peek(tokens).text == ':':
+        pop_next(tokens, ':')
+        declared_type = parse_factor(tokens)
+        if not isinstance(declared_type, Identifier):
+            raise Exception(f'Expceted variable {identifier} type to be an identifier')
+        declared_type = get_type_from_str(declared_type.name)
 
     if peek(tokens).text == '=':
         pop_next(tokens, '=')
@@ -124,7 +133,8 @@ def parse_var(tokens: list[Token]) -> Var:
 
     return Var(
         name=identifier,
-        initialization=initialization
+        initialization=initialization,
+        declared_type=declared_type
     )
 
 def ended_with_block(expr: Expression) -> bool:
