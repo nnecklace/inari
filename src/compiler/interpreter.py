@@ -7,7 +7,7 @@ def interpret(node: Expression, symbol_table: SymbolTable) -> Value:
             return node.value
 
         case FuncCall():
-            func = symbol_table.find_symbol(node.name)
+            func = symbol_table.require(node.name)
             interpreted_args = [interpret(arg, symbol_table) for arg in node.args]
             if node.name == 'print_int' or node.name == 'print_bool':
                 if len(interpreted_args) != 1:
@@ -23,11 +23,11 @@ def interpret(node: Expression, symbol_table: SymbolTable) -> Value:
                 return func(*interpreted_args)
 
         case Identifier():
-            return symbol_table.find_symbol(node.name)
+            return symbol_table.require(node.name)
 
         case BinaryOp():
             if node.op == '=':
-                return symbol_table.find_symbol(node.left.name, interpret(node.right, symbol_table))
+                return symbol_table.require(node.left.name, interpret(node.right, symbol_table))
 
             if node.op == 'and':
                 return interpret(node.left, symbol_table) and interpret(node.right, symbol_table)
@@ -35,13 +35,13 @@ def interpret(node: Expression, symbol_table: SymbolTable) -> Value:
             if node.op == 'or':
                 return interpret(node.left, symbol_table) or interpret(node.right, symbol_table)
 
-            return symbol_table.find_symbol(node.op)(
+            return symbol_table.require(node.op)(
                 interpret(node.left, symbol_table),
                 interpret(node.right, symbol_table)
             )
 
         case UnaryOp():
-            return symbol_table.find_symbol('unary_'+node.op)(
+            return symbol_table.require('unary_'+node.op)(
                 interpret(node.right, symbol_table)
             )
 
@@ -58,7 +58,7 @@ def interpret(node: Expression, symbol_table: SymbolTable) -> Value:
             return last
 
         case Var():
-            symbol_table.bindings[node.name.name] = interpret(node.initialization, symbol_table)
+            symbol_table.add_local(node.name.name, interpret(node.initialization, symbol_table))
         
         case Block():
             new_symbol_table = SymbolTable(bindings={}, parent=symbol_table)

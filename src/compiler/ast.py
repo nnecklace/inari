@@ -1,11 +1,13 @@
 from dataclasses import dataclass, field
 from compiler.types import Type, Unit
+from compiler.location import Location
 
 @dataclass
 class Expression:
     """Base class for AST nodes representing expressions."""
     # TODO: Add Location to expression
     type: Type = field(kw_only=True, default=Unit)
+    location: Location = field(kw_only=True, default=None)
 
 @dataclass
 class Literal(Expression):

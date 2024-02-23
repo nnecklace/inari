@@ -7,10 +7,10 @@ regexes = {
     "comment": re.compile(r'(/{2,}|#).*'),
     "whitespace": re.compile(r'\s'),
     "number": re.compile(r'[0-9]*'),
-    "identifier": re.compile(r'\b[A-Za-z_][A-Za-z0-9_]*\b(?<!\btrue|\bfalse)'),
+    "identifier": re.compile(r'\b[A-Za-z_][A-Za-z0-9_]*\b(?<!\btrue|\bfalse|\band|\bor)'),
     "int_literal": re.compile(r'\d+'),
     "bool_literal": re.compile(r'\b(true|false)'), # check this
-    "operator": re.compile(r'(\+|-|%|\*|/|==|!=|<=|>=|>|<|=)'),
+    "operator": re.compile(r'(\+|-|%|\*|/|==|!=|<=|>=|>|<|=|and|or)'),
     "punctuation": re.compile(r'(\(|\)|{|}|,|;|:)')
 }
 
