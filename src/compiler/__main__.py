@@ -1,4 +1,5 @@
 import sys
+from compiler.assembler import assemble
 from compiler.ast import Expression
 from compiler.ir import generate_root_var_types
 from compiler.tokenizer import tokenize
@@ -55,12 +56,10 @@ def main() -> int:
         source_code = read_source_code()
         ...  # TODO(student)
     elif command == 'compile':
-        #try:
         source = tokenize_parse_and_typecheck(read_source_code())
         ins = generate_ir(generate_root_var_types(),source)
-        print(generate_assembly(ins))
-        #except Exception as expt:
-            #print(expt)
+        asm = generate_assembly(ins)
+        assemble(asm, 'out')
     else:
         print(f"Error: unknown command: {command}\n\n{usage}", file=sys.stderr)
         return 1

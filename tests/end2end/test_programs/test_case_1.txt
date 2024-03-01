@@ -1,0 +1,24 @@
+input#1+1
+prints#2
+----------
+input#2*2+3*3
+prints#13
+----------
+input#2*(2+3)*3
+prints#30
+----------
+input#4/2*2/4
+prints#1
+----------
+input#if 1 > 2 then 3 else 4
+prints#4
+----------
+input#var a = 1; var b = a+1; var c = 2; b*c
+prints#4
+----------
+input#var x = 2; var y = 2; if 2 == x then y/2 else 70
+prints#1
+----------
+input#var x = 1; var y = 0; while x <= 3 do y = y + 1; y
+prints#3
+----------
