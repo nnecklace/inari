@@ -8,6 +8,7 @@ from compiler.parser import parse
 from compiler.tokenizer import tokenize
 from compiler.type_checker import typecheck
 from compiler.types import get_global_symbol_table_types
+import unittest
 
 
 def tokenize_parse_and_typecheck(inpt):
@@ -18,7 +19,7 @@ def tokenize_parse_and_typecheck(inpt):
 def run_test_case(test_count, test_namespace, test_case):
     source, expected = test_case
     assembly = generate_assembly(generate_ir(generate_root_var_types(),tokenize_parse_and_typecheck(source)))
-    assemble(assembly, f'{test_namespace}_{test_count}_out', './output')
+    assemble(assembly, f'{test_namespace}_{test_count}_out', './tests/end2end/test_programs/output')
 
 def read_test_cases():
     path = './tests/end2end/test_programs'
@@ -34,7 +35,8 @@ def read_test_cases():
                 expected = lines[i+1].strip().split('#')[1]
                 count += 1
                 i = i + 3
-                #run_test_case(count, f, (inpt, expected))
+                run_test_case(count, f, (inpt, expected))
 
-
-read_test_cases()
+class End2EndTest(unittest.TestCase):
+    def test_all_cases(self):
+        read_test_cases()
