@@ -1,4 +1,12 @@
 import sys
+from compiler.ast import Expression
+from compiler.ir import generate_root_var_types
+from compiler.tokenizer import tokenize
+from compiler.parser import parse
+from compiler.ir_generator import generate_ir
+from compiler.type_checker import typecheck
+from compiler.types import get_global_symbol_table_types
+from compiler.assembly_generator import generate_assembly
 
 # TODO(student): add more commands as needed
 usage = f"""
@@ -11,6 +19,10 @@ Common arguments:
     source_code_file        Optional. Defaults to standard input if missing.
  """.strip() + "\n"
 
+def tokenize_parse_and_typecheck(inpt: str) -> Expression:
+    parsed = parse(tokenize(inpt))
+    typecheck(parsed, get_global_symbol_table_types())
+    return parsed
 
 def main() -> int:
     command: str | None = None
@@ -42,6 +54,13 @@ def main() -> int:
     if command == 'interpret':
         source_code = read_source_code()
         ...  # TODO(student)
+    elif command == 'compile':
+        #try:
+        source = tokenize_parse_and_typecheck(read_source_code())
+        ins = generate_ir(generate_root_var_types(),source)
+        print(generate_assembly(ins))
+        #except Exception as expt:
+            #print(expt)
     else:
         print(f"Error: unknown command: {command}\n\n{usage}", file=sys.stderr)
         return 1

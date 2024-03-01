@@ -21,7 +21,7 @@ def generate_ir(
         var_x = IRVar('x'+str(num))
         var_counts['x'] = num
         var_types[var_x] = t
-        return var_x       
+        return var_x
 
     # We collect the IR instructions that we generate
     # into this list.
@@ -191,12 +191,12 @@ def generate_ir(
     if var_types[var_final_result] == Int:
         # Emit a call to 'print_int'
         x_count = var_counts['x']+1
-        ins.append(Call(root_expr.location, 'print_int', [var_final_result], IRVar('x'+str(x_count)))) 
+        ins.append(Call(root_expr.location, root_symtab.require('print_int'), [var_final_result], IRVar('x'+str(x_count)))) 
         var_counts['x'] = x_count
     elif var_types[var_final_result] == Bool:
         # Emit a call to 'print_bool'
         x_count = var_counts['x']+1
-        ins.append(Call(root_expr.location, 'print_bool', [var_final_result], IRVar('x'+str(x_count))))
+        ins.append(Call(root_expr.location, root_symtab.require('print_bool'), [var_final_result], IRVar('x'+str(x_count))))
         var_counts['x'] = x_count
 
     return ins

@@ -29,10 +29,10 @@ class SymbolTable(Generic[T]):
         self.bindings = bindings
         self.parent = parent
 
-    def add_local(self: Self, key: str, value: T):
+    def add_local(self: Self, key: str, value: T) -> None:
         self.bindings[key] = value
         
-    def require(self: Self, name: str, new_value: Type = None):
+    def require(self: Self, name: str, new_value: Type = None) -> T:
         current = self
         while current:
             if name in current.bindings:
