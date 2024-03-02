@@ -60,6 +60,16 @@ def main() -> int:
         ins = generate_ir(generate_root_var_types(),source)
         asm = generate_assembly(ins)
         assemble(asm, 'out')
+    elif command == 'ir':
+        source = tokenize_parse_and_typecheck(read_source_code())
+        ins = generate_ir(generate_root_var_types(),source)
+        for i in ins:
+            print(i)
+    elif command == 'asm':
+        source = tokenize_parse_and_typecheck(read_source_code())
+        ins = generate_ir(generate_root_var_types(),source)
+        asm = generate_assembly(ins)
+        print(asm)
     else:
         print(f"Error: unknown command: {command}\n\n{usage}", file=sys.stderr)
         return 1

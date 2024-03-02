@@ -1,6 +1,7 @@
 from compiler.ir import Instruction, IRVar, Label, LoadIntConst, Jump, LoadBoolConst, Copy, CondJump, Call
 from dataclasses import fields
 from compiler.intrinsics import all_intrinsics, IntrinsicArgs
+from compiler.types import get_global_symbol_table_types
 
 class Locals:
     """Knows the memory location of every local variable."""
@@ -14,7 +15,7 @@ class Locals:
             self._var_to_location[var] = str(start_loc)+'(%rbp)'
             start_loc += -8
         
-        self._stack_used = -1*start_loc
+        self._stack_used = -1*start_loc-8
 
     def get_ref(self, v: IRVar) -> str:
         """Returns an Assembly reference like `-24(%rbp)`
@@ -26,11 +27,13 @@ class Locals:
         return self._stack_used
 
 def get_all_ir_variables(instructions: list[Instruction]) -> list[IRVar]:
+    roots = get_global_symbol_table_types()
     result_list: list[IRVar] = []
     result_set: set[IRVar] = set()
 
     def add(v: IRVar) -> None:
-        if v not in result_set:
+        # we need to make sure we don't add globals to the stack
+        if (v not in result_set) and (v.name not in roots.bindings.keys()):
             result_list.append(v)
             result_set.add(v)
 
@@ -49,8 +52,10 @@ def generate_assembly(instructions: list[Instruction]) -> str:
     lines = []
     def emit(line: str) -> None: lines.append(line)
 
+    vars = get_all_ir_variables(instructions)
+
     locals = Locals(
-        variables=get_all_ir_variables(instructions)
+        variables=vars
     )
 
     emit('.extern print_int')
@@ -113,7 +118,7 @@ def generate_assembly(instructions: list[Instruction]) -> str:
 
                 if insn.fun.name == 'print_int' or insn.fun.name == 'print_bool':
                     emit(f'movq {locals.get_ref(insn.args[0])}, %rdi')
-                    emit(f'call {insn.fun.name}')
+                    emit(f'callq {insn.fun.name}')
 
                 emit(f'movq %rax, {locals.get_ref(insn.dest)}')
 

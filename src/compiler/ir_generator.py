@@ -66,9 +66,10 @@ def generate_ir(
                 return symbol_table.require(expr.name)
             
             case UnaryOp():
-                var_result = new_var(expr.type)
                 var_body = visit(symbol_table, expr.right)
-                ins.append(Call(loc, expr.op, [var_body], var_result))
+                var_result = new_var(expr.type)
+                var_op = symbol_table.require(f'unary_{expr.op}')
+                ins.append(Call(loc, var_op, [var_body], var_result))
                 return var_result
             
             case BinaryOp():
