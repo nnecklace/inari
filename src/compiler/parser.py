@@ -83,28 +83,6 @@ def parse_while(tokens: list[Token]) -> Expression:
         body=body
     )
 
-# check if needed
-def parse_vars(tokens: list[Token]) -> Block | Var:
-    var = parse_var(tokens)
-
-    if peek(tokens).text == ';':
-        pop_next(tokens, ';')
-        block = Block([])
-        block.statements.append(var)
-        semi_colon_count = 1
-        while peek(tokens).text == 'var' and peek(tokens).type != 'end':
-            block.statements.append(parse_var(tokens))
-            if peek(tokens).text == ';':
-                pop_next(tokens, ';')
-                semi_colon_count += 1
-
-        if semi_colon_count == len(block.statements):
-            block.statements.append(Literal(None))
-
-        return block
-
-    return var
-
 def parse_var(tokens: list[Token]) -> Var:
     pop_next(tokens, 'var')
     identifier = parse_factor(tokens)
@@ -124,12 +102,19 @@ def parse_var(tokens: list[Token]) -> Var:
 
     if peek(tokens).text == '=':
         pop_next(tokens, '=')
-        initialization = parse_expression(tokens)
+        initialization = parse_block_or_expression(tokens)
 
     following = peek(tokens)
 
-    if following.text != ';' and following.type != 'end' and following.text != '}':
+    if following.text != ';' and \
+        following.type != 'end' and \
+        following.text != '}' and \
+        not ended_with_block(initialization) and \
+        not isinstance(initialization, Block):
         raise Exception(f'Expected ; after var declaration instead found {following.text}')
+
+    if isinstance(initialization, Block) and peek(tokens).text == ';':
+        pop_next(tokens,';')
 
     return Var(
         name=identifier,
@@ -138,6 +123,12 @@ def parse_var(tokens: list[Token]) -> Var:
     )
 
 def ended_with_block(expr: Expression) -> bool:
+    if isinstance(expr, Var):
+        if isinstance(expr.initialization, Block):
+            return True
+        else:
+            return ended_with_block(expr.initialization)
+
     if isinstance(expr, IfThenElse):
         if expr.otherwise and isinstance(expr.otherwise, Block):
             return True
@@ -150,6 +141,12 @@ def ended_with_block(expr: Expression) -> bool:
     return False
 
 def ended_with_semi_colon(expr: Expression) -> bool:
+    if isinstance(expr, Var):
+        if isinstance(expr.initialization, Block) and expr.initialization.ended_with_semi_colon:
+            return True
+        else:
+            return ended_with_semi_colon(expr.initialization)
+
     if isinstance(expr, IfThenElse):
         if expr.otherwise and isinstance(expr.otherwise, Block) and expr.otherwise.ended_with_semi_colon:
             return True
@@ -235,7 +232,7 @@ def parse_factor(tokens: list[Token]) -> Expression:
 
 def parse_parenthesized(tokens: list[Token]) -> Expression:
     pop_next(tokens, '(')
-    expr = parse_expression(tokens)
+    expr = parse_block_or_expression(tokens)
     pop_next(tokens, ')')
     return expr
 
@@ -245,7 +242,7 @@ def parse_function_call(identifier: Identifier, tokens: list[Token]) -> FuncCall
     while peek(tokens).text != ')':
         if peek(tokens).meta == 'end' or peek(tokens).type == 'end':
             raise Exception(f'{peek(tokens).location}: expected )')
-        args.append(parse_expression(tokens))
+        args.append(parse_block_or_expression(tokens))
         if peek(tokens).text == ',':
             pop_next(tokens)
     pop_next(tokens, ')')
@@ -283,7 +280,7 @@ def parse_expression(tokens: list[Token]) -> Expression:
 
     if peek(tokens).text == '=':
         op = pop_next(tokens).text # operator
-        right = parse_expression(tokens) # right term
+        right = parse_block_or_expression(tokens) # right term
 
         if isinstance(right, Block) and peek(tokens).text == ';':
             pop_next(tokens, ';')

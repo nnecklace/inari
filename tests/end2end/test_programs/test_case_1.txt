@@ -19,6 +19,6 @@ prints#4
 input#var x = 2; var y = 2; if 2 == x then y/2 else 70
 prints#1
 ----------
-input#var x = 1; var y = 0; while x <= 3 do y = y + 1; y
-prints#3
+input#var x = 1; var y = 0; while y <= 3 do y = y + 1; y
+prints#4
 ----------

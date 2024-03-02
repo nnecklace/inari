@@ -388,6 +388,33 @@ class ParserTest(unittest.TestCase):
     def test_parse_variable_with_unknown_type(self):
         assert parse(tokenize('var test: int = true')) == Var(name=Identifier('test'), declared_type=Unknown, initialization=Literal(True))
 
+    def test_parse_basic_program(self):
+        assert parse(tokenize('var x = if true then {var a = 2; a*5} else {-1}; x')) == Block(statements=[
+             Var(name=Identifier('x'), initialization=IfThenElse(cond=Literal(True), then=Block(statements=[
+                Var(name=Identifier('a'), initialization=Literal(2)),
+                BinaryOp(left=Identifier('a'), op='*', right=Literal(5))
+            ]), otherwise=Block(statements=[UnaryOp(op='-', right=Literal(1))]))),
+            Identifier('x')
+        ])
+
+    def test_parse_basic_program2(self):
+        assert parse(tokenize('var y = 3; var t = true; var x = if t then {var a = 2; a*y} else {-1}; x')) == Block(statements=[
+            Var(name=Identifier('y'), initialization=Literal(3)),
+            Var(name=Identifier('t'), initialization=Literal(True)),
+            Var(name=Identifier('x'), initialization=IfThenElse(cond=Identifier('t'), then=Block(statements=[
+                Var(name=Identifier('a'), initialization=Literal(2)),
+                BinaryOp(left=Identifier('a'), op='*', right=Identifier('y'))
+            ]), otherwise=Block(statements=[UnaryOp(op='-', right=Literal(1))]))),
+            Identifier('x')
+        ])
+
+    def test_parse_many_vars(self):
+        assert parse(tokenize('var a = {} var x = 1;')) == Block(statements=[
+            Var(name=Identifier('a'), initialization=Block(statements=[Literal(None)])),
+            Var(name=Identifier('x'), initialization=Literal(1)),
+            Literal(None)
+        ])
+
     def test_parse_erroneous_block(self):
         self.assertRaises(Exception, parse, tokenize('{ a b }'))
 
