@@ -1,7 +1,7 @@
 from compiler.parser import parse
 from compiler.tokenizer import tokenize
 from compiler.ast import Expression, BinaryOp, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, Block, Var, While
-from compiler.types import Int, Unknown
+from compiler.types import Int, Unit, Unknown
 
 import unittest
 
@@ -300,7 +300,7 @@ class ParserTest(unittest.TestCase):
         )
     
     def test_parse_parens_with_block(self):
-        assert parse(tokenize('({})')) == Block(statements=[])
+        assert parse(tokenize('({})')) == Block(statements=[Literal(type=Unit, location=None, value=None)])
     
     def test_parse_blocks_with_while_blocks(self):
         assert parse(tokenize('{while false do {b;};}')) == Block(statements=[
@@ -377,7 +377,7 @@ class ParserTest(unittest.TestCase):
         assert parse(tokenize('a = {1+1};')) == BinaryOp(left=Identifier('a'), op='=', right=Block(statements=[BinaryOp(left=Literal(1), op='+', right=Literal(1))]))
 
     def test_parse_top_level_with_block(self):
-        assert parse(tokenize('{};')) == Block(statements=[Block(statements=[]), Literal(None)])
+        assert parse(tokenize('{};')) == Block(statements=[Block(statements=[Literal(None)]), Literal(None)])
     
     def test_parse_block_with_var(self):
         assert parse(tokenize('{var a = 1+1; 1+a}')) == Block(statements=[Var(name=Identifier('a'), initialization=BinaryOp(left=Literal(1), op='+', right=Literal(1))), BinaryOp(left=Literal(1), op='+', right=Identifier('a'))])
@@ -414,6 +414,18 @@ class ParserTest(unittest.TestCase):
             Var(name=Identifier('x'), initialization=Literal(1)),
             Literal(None)
         ])
+
+    def test_parse_basic_program3(self):
+        assert parse(tokenize('var max = -999; {while max < 0 do {max = max+1;}}; max')) == Block(statements=[
+            Var(name=Identifier('max'), initialization=UnaryOp(op='-', right=Literal(999))),
+            Block(statements=[While(cond=BinaryOp(left=Identifier('max'), op='<', right=Literal(0)), body=Block(statements=[
+                BinaryOp(left=Identifier('max'), op='=', right=BinaryOp(left=Identifier('max'), op='+', right=Literal(1))), 
+                Literal(None)
+            ]))]),
+            Identifier('max')
+        ])
+    
+    # Block(type=Unit, location=None, statements=[Var(type=Unit, location=None, name=Identifier(type=Unit, location=None, name='max'), initialization=UnaryOp(type=Unit, location=None, op='-', right=Literal(type=Unit, location=None, value=999)), declared_type=None), Block(type=Unit, location=None, statements=[While(type=Unit, location=None, cond=BinaryOp(type=Unit, location=None, left=Identifier(type=Unit, location=None, name='max'), op='<', right=Literal(type=Unit, location=None, value=0)), body=Block(type=Unit, location=None, statements=[BinaryOp(type=Unit, location=None, left=Identifier(type=Unit, location=None, name='max'), op='=', right=BinaryOp(type=Unit, location=None, left=Identifier(type=Unit, location=None, name='max'), op='+', right=Literal(type=Unit, location=None, value=1))), Literal(type=Unit, location=None, value=None)], ended_with_semi_colon=False))], ended_with_semi_colon=True), Identifier(type=Unit, location=None, name='max'), Literal(type=Unit, location=None, value=None)]
 
     def test_parse_erroneous_block(self):
         self.assertRaises(Exception, parse, tokenize('{ a b }'))

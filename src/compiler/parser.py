@@ -171,13 +171,12 @@ def parse_block(tokens: list[Token], top_level_block: bool = False) -> Expressio
     while peek(tokens).text != '}' and peek(tokens).type != 'end':
         if peek(tokens).text == '{':
             statements.append(parse_block(tokens))
+            semi_colon_count += 1
             if peek(tokens).text == ';':
                 pop_next(tokens, ';')
-                semi_colon_count += 1
+
             if peek(tokens).text == '}':
                 break
-            else:
-                semi_colon_count += 1
         else:
             statements.append(parse_expression(tokens))
 
@@ -193,7 +192,9 @@ def parse_block(tokens: list[Token], top_level_block: bool = False) -> Expressio
         pop_next(tokens, '}')
 
     if semi_colon_count == len(statements):
-        if len(statements) == 0 or not ended_with_block(statements[-1]):
+        if len(statements) > 0 and isinstance(statements[-1], Block) and statements[-1].ended_with_semi_colon:
+            statements.append(Literal(None))
+        elif len(statements) == 0 or (not ended_with_block(statements[-1]) and not isinstance(statements[-1], Block)):
             statements.append(Literal(None))
         elif ended_with_block(statements[-1]) and ended_with_semi_colon(statements[-1]):
             statements.append(Literal(None))

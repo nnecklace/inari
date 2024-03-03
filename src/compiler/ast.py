@@ -65,8 +65,11 @@ class Block(Expression):
         if not isinstance(other, Block):
             return NotImplemented
 
-        for obj in other.statements:
-            if obj not in self.statements:
+        if len(other.statements) != len(self.statements):
+            return False
+
+        for i, obj in enumerate(other.statements):
+            if obj != self.statements[i]:
                 return False
 
         return True
