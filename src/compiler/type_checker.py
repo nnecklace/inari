@@ -1,8 +1,8 @@
 from compiler.ast import Expression, BinaryOp, Literal, Identifier, UnaryOp, Var, Block, While, IfThenElse, FuncCall
 from compiler.types import Int, Type, Bool, Unit, SymbolTable, Value
-from typing import get_args
+from typing import Any, get_args
 
-def get_type(value: Value) -> Type:
+def get_type(value: Value) -> Type: # type: ignore[valid-type]
     if value is int:
         return Int
     if value is bool:
@@ -10,14 +10,14 @@ def get_type(value: Value) -> Type:
 
     return Unit
 
-def args_match(arg_types: list[Type], args: list[Type]):
+def args_match(arg_types: list[Type], args: list[Type]) -> bool: # type: ignore[valid-type]
     for indx, arg in enumerate(args):
         if arg is not arg_types[indx]:
             return False
     
     return True
 
-def type_check_function(name: str, arguments: list[Expression], symbol_table: SymbolTable):
+def type_check_function(name: str, arguments: list[Expression], symbol_table: SymbolTable) -> Any:
     signature = get_args(symbol_table.require(name))
     passed_args = [typecheck(arg, symbol_table) for arg in arguments]
     if args_match(signature[0], passed_args):
@@ -25,11 +25,11 @@ def type_check_function(name: str, arguments: list[Expression], symbol_table: Sy
     else:
         raise Exception(f'Argument missmatch for {name} expecting arguments with types {signature[0]} got {passed_args}')
 
-def return_and_assign(node: Expression, type: Type) -> Type:
+def return_and_assign(node: Expression, type: Type) -> Type: # type: ignore[valid-type]
     node.type = type
     return type
 
-def typecheck(node: Expression, symbol_table: SymbolTable) -> Type:
+def typecheck(node: Expression, symbol_table: SymbolTable) -> Type: # type: ignore[valid-type]
     match node:
         case Literal():
             return return_and_assign(node, get_type(type(node.value)))
@@ -72,10 +72,11 @@ def typecheck(node: Expression, symbol_table: SymbolTable) -> Type:
                 raise Exception(f'If condition should be bool {cond} given')
             
             then = typecheck(node.then, symbol_table)
-            otherwise = typecheck(node.otherwise, symbol_table)
 
-            if node.otherwise and then is not otherwise:
-                raise Exception(f'Then {then} and Else {otherwise} branch mismatched types')
+            if node.otherwise:
+                otherwise = typecheck(node.otherwise, symbol_table)
+                if then is not otherwise:
+                    raise Exception(f'Then {then} and Else {otherwise} branch mismatched types')
             
             return return_and_assign(node, then)
         
@@ -97,9 +98,11 @@ def typecheck(node: Expression, symbol_table: SymbolTable) -> Type:
             return return_and_assign(node, initialization_type)
         
         case Block():
-            new_symbol_table = SymbolTable(bindings={}, parent=symbol_table)
+            new_symbol_table = SymbolTable[Type](bindings={}, parent=symbol_table) # type: ignore[valid-type]
             for expr in node.statements[:len(node.statements)-1]:
                 typecheck(expr, new_symbol_table)
                 
             # TODO: most likely fails with empty statement list, actually probably not but lets remember to check
             return return_and_assign(node, typecheck(node.statements[-1], new_symbol_table))
+    
+    raise Exception('Unknown expression type in type checker')

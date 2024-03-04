@@ -1,7 +1,7 @@
 from dataclasses import dataclass, fields
-from typing import Any
+from typing import Any, Dict
 from compiler.location import Location
-from compiler.types import get_global_symbol_table_types
+from compiler.types import Type, get_global_symbol_table_types
 
 @dataclass(frozen=True)
 class IRVar:
@@ -73,7 +73,7 @@ class CondJump(Instruction):
     then_label: Label
     else_label: Label
 
-def generate_root_var_types():
+def generate_root_var_types() -> Dict[IRVar, Type]: # type: ignore[valid-type]
     global_types = get_global_symbol_table_types().bindings
     root_types = {}
 

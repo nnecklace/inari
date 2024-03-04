@@ -6,8 +6,8 @@ from compiler.location import Location
 class Expression:
     """Base class for AST nodes representing expressions."""
     # TODO: Add Location to expression
-    type: Type = field(kw_only=True, default=Unit)
-    location: Location = field(kw_only=True, default=None)
+    type: Type = field(kw_only=True, default=Unit) # type: ignore[valid-type]
+    location: Location = field(kw_only=True, default_factory=(lambda: Location(file='', line=0, column=0)))
 
 @dataclass
 class Literal(Expression):
@@ -34,7 +34,7 @@ class IfThenElse(Expression):
     """AST node for If then else operation like `if a then b else c`"""
     cond: Expression
     then: Expression
-    otherwise: Expression = None
+    otherwise: Expression | None = None
     name: str = 'if'
 
 @dataclass
@@ -46,7 +46,7 @@ class While(Expression):
 class Var(Expression):
     name: Identifier
     initialization: Expression
-    declared_type: Type | None = None
+    declared_type: Type | None = None # type: ignore[valid-type]
 
 @dataclass
 class FuncCall(Expression):

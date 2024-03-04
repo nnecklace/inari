@@ -1,4 +1,5 @@
-import regex as re
+from typing import Dict
+import regex as re # type: ignore[import-untyped]
 from compiler.token import Token
 from compiler.location import Location
 
@@ -14,11 +15,11 @@ regexes = {
     "punctuation": re.compile(r'(\(|\)|{|}|,|;|:)')
 }
 
-def find_token(type: str, segment: str) -> list[tuple[int, int, str, str]]:
+def find_token(type: str, segment: str) -> list[Dict[str, str]]:
     return [{'start': match.start(), 'end': match.end(), 'group': match.group(), 'type': type} for match in regexes[type].finditer(segment)]
 
 def tokenize(source_code: str) -> list[Token]:
-    tokens = [Token( text='{', type='punctuation', location=Location('', 0, 0), meta='start')]
+    tokens = [Token( text='{', type='punctuation', location=Location('', 0, 0))]
 
     for line_num, line in enumerate(source_code.splitlines()):
         line = regexes['comment'].sub('', line).strip() # just remove all comments from each line
@@ -51,11 +52,11 @@ def tokenize(source_code: str) -> list[Token]:
                         location=Location(
                             file='',
                             line=line_num, 
-                            column=match['start']
+                            column=int(match['start'])
                         )
                     )
                 )
 
-    tokens.append(Token(text='}', type='punctuation', location=Location('', tokens[-1].location.line+1, tokens[-1].location.column+1), meta='end'))
+    tokens.append(Token(text='}', type='punctuation', location=Location('', tokens[-1].location.line+1, tokens[-1].location.column+1)))
 
     return tokens

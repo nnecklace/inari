@@ -1,3 +1,4 @@
+from compiler.location import Location
 from compiler.tokenizer import Token
 from compiler.ast import Expression, BinaryOp, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, While, Var, Block
 from compiler.types import get_type_from_str
@@ -19,7 +20,7 @@ def parse(tokens: list[Token]) -> Expression:
         if tokens:
             return tokens[-1]
         else:
-            return Token(location=-1, type='end', text='')
+            return Token(location=Location(file='', line=-1, column=-1), type='end', text='')
 
     def pop_next(expected: str | None = None) -> Token:
         if peek().type == 'end':
@@ -122,11 +123,11 @@ def parse(tokens: list[Token]) -> Expression:
 
         return Var(
             name=identifier,
-            initialization=initialization,
+            initialization=initialization, # type: ignore[arg-type]
             declared_type=declared_type
         )
 
-    def includes_end_block(expr: Expression) -> bool:
+    def includes_end_block(expr: Expression | None) -> bool:
         match expr:
             case Block():
                 return True
@@ -141,7 +142,7 @@ def parse(tokens: list[Token]) -> Expression:
 
         return False
 
-    def includes_end_block_with_semi_colon(expr: Expression) -> bool:
+    def includes_end_block_with_semi_colon(expr: Expression | None) -> bool:
         if includes_end_block(expr):
             match expr:
                 case Block():
@@ -150,10 +151,10 @@ def parse(tokens: list[Token]) -> Expression:
                     return includes_end_block_with_semi_colon(expr.initialization)
                 case IfThenElse():
                     if expr.otherwise:
-                        return expr.otherwise.ended_with_semi_colon
-                    return expr.then.ended_with_semi_colon
+                        return expr.otherwise.ended_with_semi_colon # type: ignore[attr-defined]
+                    return expr.then.ended_with_semi_colon # type: ignore[attr-defined]
                 case While():
-                    return expr.body.ended_with_semi_colon
+                    return expr.body.ended_with_semi_colon # type: ignore[attr-defined]
 
         return False 
 

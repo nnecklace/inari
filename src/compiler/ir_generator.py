@@ -5,16 +5,16 @@ from compiler.ast import Expression, Literal, Identifier, BinaryOp, IfThenElse, 
 def generate_ir(
     # 'root_types' parameter should map all global names
     # like 'print_int' and '+' to their types.
-    root_types: dict[IRVar, Type],
+    root_types: dict[IRVar, Type], # type: ignore[valid-type]
     root_expr: Expression
 ) -> list[Instruction]:
-    var_types: dict[IRVar, Type] = root_types.copy()
+    var_types: dict[IRVar, Type] = root_types.copy() # type: ignore[valid-type]
     # 'var_unit' is used when an expression's type is 'Unit'.
     var_unit = IRVar('unit')
     var_types[var_unit] = Unit
     var_counts = {'x': 0, 'if': 0, 'while': 0, 'and': 0, 'or': 0}
 
-    def new_var(t: Type) -> IRVar:
+    def new_var(t: Type) -> IRVar: # type: ignore[valid-type]
         # Create a new unique IR variable and
         # add it to var_types
         num = var_counts['x']+1
@@ -175,6 +175,8 @@ def generate_ir(
                     visit(symbol_table, exp)
                 
                 return visit(symbol_table, expr.statements[-1])
+            
+        raise Exception('Unknown expression type')
 
     # Convert 'root_types' into a SymTab
     # that maps all available global names to
