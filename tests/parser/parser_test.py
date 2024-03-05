@@ -425,7 +425,25 @@ class ParserTest(unittest.TestCase):
             Identifier('max')
         ])
     
-    # Block(type=Unit, location=None, statements=[Var(type=Unit, location=None, name=Identifier(type=Unit, location=None, name='max'), initialization=UnaryOp(type=Unit, location=None, op='-', right=Literal(type=Unit, location=None, value=999)), declared_type=None), Block(type=Unit, location=None, statements=[While(type=Unit, location=None, cond=BinaryOp(type=Unit, location=None, left=Identifier(type=Unit, location=None, name='max'), op='<', right=Literal(type=Unit, location=None, value=0)), body=Block(type=Unit, location=None, statements=[BinaryOp(type=Unit, location=None, left=Identifier(type=Unit, location=None, name='max'), op='=', right=BinaryOp(type=Unit, location=None, left=Identifier(type=Unit, location=None, name='max'), op='+', right=Literal(type=Unit, location=None, value=1))), Literal(type=Unit, location=None, value=None)], ended_with_semi_colon=False))], ended_with_semi_colon=True), Identifier(type=Unit, location=None, name='max'), Literal(type=Unit, location=None, value=None)]
+    def test_parse_basic_program4(self):
+        assert parse(tokenize('while true do {if 1 > 0 then { if 2 > 1 then 4 } else { if 5 < 6 then 7}}')) == While(
+            cond=Literal(True),
+            body=Block(statements=[
+                IfThenElse(cond=BinaryOp(Literal(1), '>', Literal(0)),
+                           then=Block(statements=[IfThenElse(cond=BinaryOp(Literal(2), '>', Literal(1)), then=Literal(4))]),
+                           otherwise=Block(statements=[IfThenElse(cond=BinaryOp(Literal(5), '<', Literal(6)), then=Literal(7))]))
+            ])
+        )
+
+    def test_parse_basic_program4(self):
+        assert parse(tokenize('while true do {if 1 > 0 then { while false do {} } else while false do {}}')) == While(
+            cond=Literal(True),
+            body=Block(statements=[
+                IfThenElse(cond=BinaryOp(Literal(1), '>', Literal(0)),
+                           then=Block(statements=[While(cond=Literal(False), body=Block(statements=[Literal(None)]))]),
+                           otherwise=While(cond=Literal(False), body=Block(statements=[Literal(None)])))
+            ])
+        )
 
     def test_parse_erroneous_block(self):
         self.assertRaises(Exception, parse, tokenize('{ a b }'))
