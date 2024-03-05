@@ -94,3 +94,13 @@ class BinaryOp(Expression):
         return self.left == other.left and \
                self.right == other.right and \
                self.op == other.op
+
+@dataclass
+class BreakContinue(Expression):
+    name: str
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, BreakContinue):
+            return NotImplemented
+
+        return self.name == other.name

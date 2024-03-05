@@ -1,6 +1,6 @@
 from compiler.types import Bool, Int, Type, Unit, SymbolTable
 from compiler.ir import Call, CondJump, IRVar, Instruction, LoadBoolConst, LoadIntConst, Label, Copy, Jump
-from compiler.ast import Expression, Literal, Identifier, BinaryOp, IfThenElse, Block, Var, While, UnaryOp
+from compiler.ast import BreakContinue, Expression, Literal, Identifier, BinaryOp, IfThenElse, Block, Var, While, UnaryOp
 
 def generate_ir(
     # 'root_types' parameter should map all global names
@@ -26,6 +26,13 @@ def generate_ir(
     # We collect the IR instructions that we generate
     # into this list.
     ins: list[Instruction] = []
+    loop_context: list[Label] = []
+
+    def find_label(name: str) -> Label:
+        for i in ins:
+            if isinstance(i, Label) and i.name == name:
+                return i
+        return None
 
     # This function visits an AST node,
     # appends IR instructions to 'ins',
@@ -59,6 +66,19 @@ def generate_ir(
                 # Return the variable that holds
                 # the loaded value.
                 return var
+
+            case BreakContinue():
+                if len(loop_context) == 0:
+                    raise Exception(f'Illegal use of {expr.name} can only be used within a while loop')
+
+                while_start, while_end = loop_context[-1]
+
+                if expr.name == 'break':
+                    ins.append(Jump(loc, while_end))
+                elif expr.name == 'continue':
+                    ins.append(Jump(loc, while_start))
+
+                return var_unit
 
             case Identifier():
                 # Look up the IR variable that corresponds to
@@ -157,7 +177,9 @@ def generate_ir(
                 var_cond = visit(symbol_table, expr.cond)
                 ins.append(CondJump(loc, var_cond, l_while_body, l_while_end))
                 ins.append(l_while_body)
+                loop_context.append((l_while_start, l_while_end))
                 var_result = visit(symbol_table, expr.body)
+                loop_context.pop()
                 ins.append(Jump(loc, l_while_start))
                 ins.append(l_while_end)
 

@@ -14,7 +14,7 @@ class Token:
 
         return (self.text == other.text and \
                 self.type == other.type and \
-                (self.location.file == other.location.file and \
+                ((self.location.file == other.location.file and \
                 self.location.line == other.location.line and \
                 self.location.column == other.location.column) or \
-                (type(other.location) == L))
+                (type(other.location) == L)))

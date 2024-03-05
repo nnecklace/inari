@@ -1,4 +1,4 @@
-from compiler.ast import Expression, BinaryOp, Literal, Identifier, UnaryOp, Var, Block, While, IfThenElse, FuncCall
+from compiler.ast import BreakContinue, Expression, BinaryOp, Literal, Identifier, UnaryOp, Var, Block, While, IfThenElse, FuncCall
 from compiler.types import Int, Type, Bool, Unit, SymbolTable, Value
 from typing import Any, get_args
 
@@ -36,6 +36,9 @@ def typecheck(node: Expression, symbol_table: SymbolTable) -> Type: # type: igno
 
         case Identifier():
             return return_and_assign(node, symbol_table.require(node.name))
+
+        case BreakContinue():
+            return return_and_assign(node, Unit)
 
         case UnaryOp():
             return return_and_assign(

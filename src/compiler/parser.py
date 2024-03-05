@@ -1,6 +1,6 @@
 from compiler.location import Location
 from compiler.tokenizer import Token
-from compiler.ast import Expression, BinaryOp, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, While, Var, Block
+from compiler.ast import Expression, BinaryOp, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, While, Var, Block, BreakContinue
 from compiler.types import get_type_from_str
 
 def parse(tokens: list[Token]) -> Expression:
@@ -48,6 +48,9 @@ def parse(tokens: list[Token]) -> Expression:
 
     def parse_identifier() -> Identifier:
         return Identifier(pop_next().text)
+
+    def parse_break_continue() -> BreakContinue:
+        return BreakContinue(pop_next().text)
 
     def parse_if_then_else() -> Expression:
         pop_next('if')
@@ -221,6 +224,8 @@ def parse(tokens: list[Token]) -> Expression:
                 return parse_var()
             elif text  == 'not':
                 return parse_unary_op()
+            elif text == 'break' or text == 'continue':
+                return parse_break_continue()
             else:
                 return parse_identifier()
         elif token_type == 'operator' and text == '-':

@@ -6,7 +6,7 @@ import unittest
 
 LL = L('', 0, 0)
 
-def append_and_prepend_block(tokens):
+def append_and_prepend_block(tokens: list[Token]) -> list[Token]:
     return [Token('{', 'punctuation', LL)] + tokens + [Token('}', 'punctuation', LL)]
 
 class TokenizerTest(unittest.TestCase):
@@ -127,20 +127,20 @@ class TokenizerTest(unittest.TestCase):
             Token(location=LL, type='punctuation', text=')')
         ])
 
-    def test_tokenizer_recognizes_blocks(self):
+    def test_tokenizer_recognizes_blocks(self) -> None:
         assert tokenize('{}') == append_and_prepend_block([
             Token(location=LL, type='punctuation', text='{'),
             Token(location=LL, type='punctuation', text='}')
         ])
 
-    def test_tokenizer_recognizes_blocks_with_semi_colon(self):
+    def test_tokenizer_recognizes_blocks_with_semi_colon(self) -> None:
         assert tokenize('{};') == append_and_prepend_block([
             Token(location=LL, type='punctuation', text='{'),
             Token(location=LL, type='punctuation', text='}'),
             Token(location=LL, type='punctuation', text=';')
         ])
 
-    def test_tokenizer_multiple_punctuations(self):
+    def test_tokenizer_multiple_punctuations(self) -> None:
         assert tokenize('{ b };;') == append_and_prepend_block([
             Token(location=LL, type='punctuation', text='{'),
             Token(location=LL, type='identifier', text='b'),
@@ -175,4 +175,25 @@ class TokenizerTest(unittest.TestCase):
             Token(location=LL, type='int_literal', text='1000'),
             Token(location=LL, type='operator', text='!='),
             Token(location=LL, type='int_literal', text='5')
+        ])
+    
+    def test_tokenizer_break_and_continue(self) -> None:
+        assert tokenize('while x <= 1000 do { if x%2 == 0 then break else continue }') == append_and_prepend_block([
+            Token(location=LL, type='identifier', text='while'),
+            Token(location=LL, type='identifier', text='x'),
+            Token(location=LL, type='operator', text='<='),
+            Token(location=LL, type='int_literal', text='1000'),
+            Token(location=LL, type='identifier', text='do'),
+            Token(location=LL, type='punctuation', text='{'),
+            Token(location=LL, type='identifier', text='if'),
+            Token(location=LL, type='identifier', text='x'),
+            Token(location=LL, type='operator', text='%'),
+            Token(location=LL, type='int_literal', text='2'),
+            Token(location=LL, type='operator', text='=='),
+            Token(location=LL, type='int_literal', text='0'),
+            Token(location=LL, type='identifier', text='then'),
+            Token(location=LL, type='identifier', text='break'),
+            Token(location=LL, type='identifier', text='else'),
+            Token(location=LL, type='identifier', text='continue'),
+            Token(location=LL, type='punctuation', text='}'),
         ])

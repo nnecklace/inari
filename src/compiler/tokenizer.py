@@ -1,3 +1,4 @@
+from functools import reduce
 from typing import Dict
 import regex as re # type: ignore[import-untyped]
 from compiler.token import Token
@@ -7,10 +8,9 @@ from compiler.location import Location
 regexes = {
     "comment": re.compile(r'(/{2,}|#).*'),
     "whitespace": re.compile(r'\s'),
-    "number": re.compile(r'[0-9]*'),
     "identifier": re.compile(r'\b[A-Za-z_][A-Za-z0-9_]*\b(?<!\btrue|\bfalse|\band|\bor)'),
     "int_literal": re.compile(r'\d+'),
-    "bool_literal": re.compile(r'\b(true|false)'), # check this
+    "bool_literal": re.compile(r'\b(true|false)'),
     "operator": re.compile(r'(\+|-|%|\*|/|==|!=|<=|>=|>|<|=|and|or)'),
     "punctuation": re.compile(r'(\(|\)|{|}|,|;|:)')
 }
@@ -27,14 +27,7 @@ def tokenize(source_code: str) -> list[Token]:
         if not line:
             continue
 
-        matched_tokens = sorted(
-            find_token('int_literal', line) +
-            find_token('bool_literal', line) +
-            find_token('identifier', line) +
-            find_token('operator', line) +
-            find_token('punctuation', line) +
-            find_token('whitespace', line),
-        key=lambda token: token['start'])
+        matched_tokens = sorted(reduce(list.__add__, [find_token(k, line) for k in regexes.keys() if k != 'comment']), key=lambda token: token['start']) 
 
         matched_str = ''.join([token['group'] if token else '' for token in matched_tokens])
 
