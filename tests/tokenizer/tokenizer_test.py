@@ -7,7 +7,7 @@ import unittest
 LL = L('', 0, 0)
 
 def append_and_prepend_block(tokens: list[Token]) -> list[Token]:
-    return [Token('{', 'punctuation', LL)] + tokens + [Token('}', 'punctuation', LL)]
+    return [Token('{', 'module', LL)] + tokens + [Token('}', 'module', LL)]
 
 class TokenizerTest(unittest.TestCase):
     def test_tokenizer_comment_forward_slash(self) -> None:

@@ -10,6 +10,12 @@ class Expression:
     location: Location = field(kw_only=True, default_factory=(lambda: Location(file='', line=0, column=0)))
 
 @dataclass
+class Module:
+    namespace: str
+    expressions: list[Expression]
+    type: Type = field(kw_only=True, default=Unit)
+
+@dataclass
 class Literal(Expression):
     value: int | bool | None
     # (value=None is used when parsing the keyword `unit`)
@@ -37,10 +43,21 @@ class IfThenElse(Expression):
     otherwise: Expression | None = None
     name: str = 'if'
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, IfThenElse):
+            return NotImplemented
+
+        return self.cond == other.cond and self.then == other.then and self.otherwise == other.otherwise
+
 @dataclass
 class While(Expression):
     cond: Expression
     body: Expression
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, While):
+            return NotImplemented
+
+        return self.cond == other.cond and self.body == other.body
 
 @dataclass
 class Var(Expression):
@@ -48,18 +65,25 @@ class Var(Expression):
     initialization: Expression
     declared_type: Type | None = None # type: ignore[valid-type]
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Var):
+            return NotImplemented
+
+        return self.initialization == other.initialization and self.name == other.name
+
 @dataclass
 class FuncCall(Expression):
-    """AST node for function calls"""
     args: list[Expression]
-    name: str
+    name: str # TODO: Change to identifier
+
+@dataclass
+class FuncDef(Expression):
+    name: Identifier
+    args: list[Identifier]
 
 @dataclass
 class Block(Expression):
-    """AST node to represent blocks"""
     statements: list[Expression]
-
-    ended_with_semi_colon: bool = False
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Block):
@@ -79,6 +103,12 @@ class UnaryOp(Expression):
     """AST node for unary operator like `not -1`"""
     op: str
     right: Expression
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, UnaryOp):
+            return NotImplemented
+        
+        return self.op == other.op and self.right == other.right
 
 @dataclass
 class BinaryOp(Expression):

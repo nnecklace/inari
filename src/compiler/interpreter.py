@@ -1,5 +1,11 @@
-from compiler.ast import Expression, Literal, IfThenElse, While, BinaryOp, Var, Block, Identifier, UnaryOp, FuncCall
-from compiler.types import SymbolTable, Value
+from compiler.ast import Expression, Literal, IfThenElse, Module, While, BinaryOp, Var, Block, Identifier, UnaryOp, FuncCall
+from compiler.types import SymbolTable, Unit, Value
+
+def interpret_module(module: Module, root_table: SymbolTable) -> Unit:
+    for expr in module.expressions[:len(module.expressions)-1]:
+        interpret(expr, root_table)
+
+    return interpret(module.expressions[-1], root_table)
 
 def interpret(node: Expression, symbol_table: SymbolTable) -> Value:
     match node:

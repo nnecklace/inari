@@ -1,6 +1,6 @@
-from compiler.ast import BreakContinue, Expression, BinaryOp, Literal, Identifier, UnaryOp, Var, Block, While, IfThenElse, FuncCall
+from compiler.ast import BreakContinue, Expression, BinaryOp, Literal, Identifier, UnaryOp, Var, Block, While, IfThenElse, FuncCall, Module
 from compiler.types import Int, Type, Bool, Unit, SymbolTable, Value
-from typing import Any, get_args
+from typing import Any, Dict, get_args
 
 def get_type(value: Value) -> Type: # type: ignore[valid-type]
     if value is int:
@@ -28,6 +28,13 @@ def type_check_function(name: str, arguments: list[Expression], symbol_table: Sy
 def return_and_assign(node: Expression, type: Type) -> Type: # type: ignore[valid-type]
     node.type = type
     return type
+
+def typecheck_module(module: Module, root_table: SymbolTable) -> list[tuple[Expression, Type]]:
+    expr_types: list[tuple[Expression, Type]] = []
+    for expr in module.expressions:
+        expr_types.append((expr, typecheck(expr, root_table)))
+
+    return expr_types
 
 def typecheck(node: Expression, symbol_table: SymbolTable) -> Type: # type: ignore[valid-type]
     match node:
