@@ -1,13 +1,13 @@
 from typing import Dict
 from compiler.types import Bool, Int, Type, Unit, SymbolTable
 from compiler.ir import Call, CondJump, IRVar, Instruction, LoadBoolConst, LoadIntConst, Label, Copy, Jump
-from compiler.ast import BreakContinue, Expression, Literal, Identifier, BinaryOp, IfThenElse, Block, Var, While, UnaryOp
+from compiler.ast import BreakContinue, Expression, Literal, Identifier, BinaryOp, IfThenElse, Block, Var, While, UnaryOp, Module
 
 def generate_ir(
     # 'root_types' parameter should map all global names
     # like 'print_int' and '+' to their types.
     root_types: dict[IRVar, Type], # type: ignore[valid-type]
-    root_expr: Expression
+    root_module: Module 
 ) -> Dict[str, list[Instruction]]:
     var_types: dict[IRVar, Type] = root_types.copy() # type: ignore[valid-type]
     # 'var_unit' is used when an expression's type is 'Unit'.
@@ -207,17 +207,20 @@ def generate_ir(
         root_symtab.add_local(v.name, v)
 
     # Start visiting the AST from the root.
-    var_final_result = visit(root_symtab, root_expr)
+    for exp in root_module.expressions[:len(root_module.expressions)-1]:
+        visit(root_symtab, exp)
+    
+    var_final_result = visit(root_symtab, root_module.expressions[-1])
 
     if var_types[var_final_result] == Int:
         # Emit a call to 'print_int'
         x_count = var_counts['x']+1
-        ins.append(Call(root_expr.location, root_symtab.require('print_int'), [var_final_result], IRVar('x'+str(x_count)))) 
+        ins.append(Call(root_module.location, root_symtab.require('print_int'), [var_final_result], IRVar('x'+str(x_count)))) 
         var_counts['x'] = x_count
     elif var_types[var_final_result] == Bool:
         # Emit a call to 'print_bool'
         x_count = var_counts['x']+1
-        ins.append(Call(root_expr.location, root_symtab.require('print_bool'), [var_final_result], IRVar('x'+str(x_count))))
+        ins.append(Call(root_module.location, root_symtab.require('print_bool'), [var_final_result], IRVar('x'+str(x_count))))
         var_counts['x'] = x_count
 
     ns_ins['main'] = ins

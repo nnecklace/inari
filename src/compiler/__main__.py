@@ -5,9 +5,9 @@ from compiler.ir import generate_root_var_types
 from compiler.tokenizer import tokenize
 from compiler.parser import parse
 from compiler.ir_generator import generate_ir
-from compiler.type_checker import typecheck
+from compiler.type_checker import typecheck_module
 from compiler.types import get_global_symbol_table_types
-from compiler.assembly_generator import generate_assembly
+from compiler.assembly_generator import generate_assembly, generate_ns_assembly
 
 # TODO(student): add more commands as needed
 usage = f"""
@@ -22,7 +22,7 @@ Common arguments:
 
 def tokenize_parse_and_typecheck(inpt: str) -> Expression:
     parsed = parse(tokenize(inpt))
-    typecheck(parsed, get_global_symbol_table_types())
+    typecheck_module(parsed, get_global_symbol_table_types())
     return parsed
 
 def main() -> int:
@@ -62,13 +62,13 @@ def main() -> int:
         assemble(asm, 'out')
     elif command == 'ir':
         source = tokenize_parse_and_typecheck(read_source_code())
-        ins = generate_ir(generate_root_var_types(),source)
+        ins = generate_ir(generate_root_var_types(),source)['main']
         for i in ins:
             print(i)
     elif command == 'asm':
         source = tokenize_parse_and_typecheck(read_source_code())
         ins = generate_ir(generate_root_var_types(),source)
-        asm = generate_assembly(ins)
+        asm = generate_ns_assembly(ins)
         print(asm)
     else:
         print(f"Error: unknown command: {command}\n\n{usage}", file=sys.stderr)

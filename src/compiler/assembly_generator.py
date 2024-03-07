@@ -51,7 +51,7 @@ def get_all_ir_variables(instructions: list[Instruction]) -> list[IRVar]:
 
 def generate_ns_assembly(ns_ins: Dict[str, list[Instruction]]) -> str:
     assembly = []
-    for ins in ns_ins.values:
+    for ins in ns_ins.values():
         assembly.append(generate_assembly(ins))
 
     return ''.join(ass+'\n' for ass in assembly)

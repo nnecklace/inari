@@ -14,6 +14,7 @@ class Module:
     namespace: str
     expressions: list[Expression]
     type: Type = field(kw_only=True, default=Unit)
+    location: Location = field(kw_only=True, default_factory=(lambda: Location(file='', line=0, column=0)))
 
 @dataclass
 class Literal(Expression):
