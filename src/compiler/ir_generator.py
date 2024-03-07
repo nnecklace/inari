@@ -1,3 +1,4 @@
+from typing import Dict
 from compiler.types import Bool, Int, Type, Unit, SymbolTable
 from compiler.ir import Call, CondJump, IRVar, Instruction, LoadBoolConst, LoadIntConst, Label, Copy, Jump
 from compiler.ast import BreakContinue, Expression, Literal, Identifier, BinaryOp, IfThenElse, Block, Var, While, UnaryOp
@@ -7,7 +8,7 @@ def generate_ir(
     # like 'print_int' and '+' to their types.
     root_types: dict[IRVar, Type], # type: ignore[valid-type]
     root_expr: Expression
-) -> list[Instruction]:
+) -> Dict[str, list[Instruction]]:
     var_types: dict[IRVar, Type] = root_types.copy() # type: ignore[valid-type]
     # 'var_unit' is used when an expression's type is 'Unit'.
     var_unit = IRVar('unit')
@@ -27,12 +28,7 @@ def generate_ir(
     # into this list.
     ins: list[Instruction] = []
     loop_context: list[Label] = []
-
-    def find_label(name: str) -> Label:
-        for i in ins:
-            if isinstance(i, Label) and i.name == name:
-                return i
-        return None
+    ns_ins = {'main': []}
 
     # This function visits an AST node,
     # appends IR instructions to 'ins',
@@ -224,4 +220,6 @@ def generate_ir(
         ins.append(Call(root_expr.location, root_symtab.require('print_bool'), [var_final_result], IRVar('x'+str(x_count))))
         var_counts['x'] = x_count
 
-    return ins
+    ns_ins['main'] = ins
+
+    return ns_ins

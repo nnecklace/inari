@@ -6,19 +6,19 @@ from compiler.ir import generate_root_var_types
 from compiler.ir_generator import generate_ir
 from compiler.parser import parse
 from compiler.tokenizer import tokenize
-from compiler.type_checker import typecheck
+from compiler.type_checker import typecheck_module
 from compiler.types import get_global_symbol_table_types
 import unittest
 import subprocess
 
 def tokenize_parse_and_typecheck(inpt):
     parsed = parse(tokenize(inpt))
-    typecheck(parsed, get_global_symbol_table_types())
+    typecheck_module(parsed, get_global_symbol_table_types())
     return parsed
 
 def run_test_case(test_count, test_namespace, test_case):
     source, expected = test_case
-    assembly = generate_assembly(generate_ir(generate_root_var_types(),tokenize_parse_and_typecheck(source)))
+    assembly = generate_assembly(generate_ir(generate_root_var_types(), tokenize_parse_and_typecheck(source))['main'])
     assemble(assembly, f'{test_namespace}_{test_count}_out')
     proc = subprocess.run([f'{os.getcwd()}/{test_namespace}_{test_count}_out'], capture_output = True, text = True)
     output = proc.stdout

@@ -1,3 +1,4 @@
+from typing import Dict
 from compiler.ir import Instruction, IRVar, Label, LoadIntConst, Jump, LoadBoolConst, Copy, CondJump, Call
 from dataclasses import fields
 from compiler.intrinsics import all_intrinsics, IntrinsicArgs
@@ -47,6 +48,13 @@ def get_all_ir_variables(instructions: list[Instruction]) -> list[IRVar]:
                     if isinstance(v, IRVar):
                         add(v)
     return result_list 
+
+def generate_ns_assembly(ns_ins: Dict[str, list[Instruction]]) -> str:
+    assembly = []
+    for ins in ns_ins.values:
+        assembly.append(generate_assembly(ins))
+
+    return ''.join(ass+'\n' for ass in assembly)
 
 def generate_assembly(instructions: list[Instruction]) -> str:
     lines = []

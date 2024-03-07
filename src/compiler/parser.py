@@ -3,7 +3,7 @@ from compiler.tokenizer import Token
 from compiler.ast import Expression, BinaryOp, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, While, Var, Block, BreakContinue, Module
 from compiler.types import get_type_from_str
 
-def parse(tokens: list[Token]) -> Expression:
+def parse(tokens: list[Token]) -> Module:
     # reverse tokens such that list works as a stack
     tokens.reverse()
 
