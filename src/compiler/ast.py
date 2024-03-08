@@ -78,11 +78,6 @@ class FuncCall(Expression):
     name: str # TODO: Change to identifier
 
 @dataclass
-class FuncDef(Expression):
-    name: Identifier
-    args: list[Identifier]
-
-@dataclass
 class Block(Expression):
     statements: list[Expression]
 
@@ -98,6 +93,17 @@ class Block(Expression):
                 return False
 
         return True
+
+@dataclass
+class Argument(Identifier):
+    declared_type: Type | None = None # type: ignore[valid-type]
+
+@dataclass
+class FuncDef(Expression):
+    name: Identifier
+    args: list[Argument]
+    body: Block
+    declared_type: Type | None = None # type: ignore[valid-type]
 
 @dataclass
 class UnaryOp(Expression):

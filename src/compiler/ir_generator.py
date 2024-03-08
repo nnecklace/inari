@@ -1,7 +1,7 @@
 from typing import Dict
 from compiler.types import Bool, Int, Type, Unit, SymbolTable
 from compiler.ir import Call, CondJump, IRVar, Instruction, LoadBoolConst, LoadIntConst, Label, Copy, Jump
-from compiler.ast import BreakContinue, Expression, Literal, Identifier, BinaryOp, IfThenElse, Block, Var, While, UnaryOp, Module
+from compiler.ast import BreakContinue, Expression, Literal, Identifier, BinaryOp, IfThenElse, Block, Var, While, UnaryOp, Module, FuncCall
 
 def generate_ir(
     # 'root_types' parameter should map all global names
@@ -27,8 +27,8 @@ def generate_ir(
     # We collect the IR instructions that we generate
     # into this list.
     ins: list[Instruction] = []
-    loop_context: list[Label] = []
-    ns_ins = {'main': []}
+    loop_context: list[tuple[Label, Label]] = []
+    ns_ins: Dict[str, list[Instruction]] = {'main': []}
 
     # This function visits an AST node,
     # appends IR instructions to 'ins',
@@ -74,6 +74,12 @@ def generate_ir(
                 elif expr.name == 'continue':
                     ins.append(Jump(loc, while_start))
 
+                return var_unit
+
+            case FuncCall():
+                args = [visit(arg, symbol_table) for arg in expr.args]
+                var_result = new_var(Unit)
+                ins.append(Call(loc, symbol_table.require(expr.name), args, var_result))
                 return var_unit
 
             case Identifier():
@@ -209,7 +215,7 @@ def generate_ir(
     # Start visiting the AST from the root.
     for exp in root_module.expressions[:len(root_module.expressions)-1]:
         visit(root_symtab, exp)
-    
+
     var_final_result = visit(root_symtab, root_module.expressions[-1])
 
     if var_types[var_final_result] == Int:

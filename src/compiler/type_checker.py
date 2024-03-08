@@ -1,6 +1,6 @@
-from compiler.ast import BreakContinue, Expression, BinaryOp, Literal, Identifier, UnaryOp, Var, Block, While, IfThenElse, FuncCall, Module
-from compiler.types import Int, Type, Bool, Unit, SymbolTable, Value
-from typing import Any, Dict, get_args
+from compiler.ast import BreakContinue, Expression, BinaryOp, FuncDef, Literal, Identifier, UnaryOp, Var, Block, While, IfThenElse, FuncCall, Module
+from compiler.types import FunctionDefinition, Int, Type, Bool, Unit, SymbolTable, Value
+from typing import Any, Callable, Dict, get_args
 
 def get_type(value: Value) -> Type: # type: ignore[valid-type]
     if value is int:
@@ -52,6 +52,20 @@ def typecheck(node: Expression, symbol_table: SymbolTable) -> Type: # type: igno
                 node,
                 type_check_function('unary_'+node.op, [node.right], symbol_table)
             )
+
+        case FuncDef():
+            t = node.declared_type
+            body = typecheck(node.body, symbol_table)
+
+            if not t:
+                t = Unit
+
+            if t is not body:
+                raise Exception(f'Function {node.name} return type must be same as given type, mismatch {t} =/= {body}')
+
+            args = [arg.declared_type for arg in node.args]
+
+            return return_and_assign(node, FunctionDefinition(args, t))
 
         case FuncCall():
             return return_and_assign(

@@ -1,6 +1,6 @@
 from compiler.location import Location
 from compiler.tokenizer import Token
-from compiler.ast import Expression, BinaryOp, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, While, Var, Block, BreakContinue, Module
+from compiler.ast import Argument, Expression, BinaryOp, FuncDef, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, While, Var, Block, BreakContinue, Module
 from compiler.types import get_type_from_str
 
 def parse(tokens: list[Token]) -> Module:
@@ -169,7 +169,9 @@ def parse(tokens: list[Token]) -> Module:
         elif token_type == 'bool_literal':
             return parse_bool_literal()
         elif token_type == 'identifier':
-            if text == 'if':
+            if text == 'fun':
+                return parse_function_definition()
+            elif text == 'if':
                 return parse_if_then_else()
             elif text == 'while':
                 return parse_while()
@@ -191,6 +193,50 @@ def parse(tokens: list[Token]) -> Module:
         expr = parse_block_or_expression()
         pop_next(')')
         return expr
+
+    def parse_function_definition() -> FuncDef:
+        pop_next('fun')
+
+        func_name = parse_factor()
+
+        if not isinstance(func_name, Identifier):
+            raise Exception(f'Function definition must be an identifier, {func_name.type} given')
+
+        arguments = []
+        pop_next('(')
+        while peek().text != ')':
+            if peek().type == 'end':
+                raise Exception(f'{peek().location}: expected )')
+            next_arg = parse_factor()
+            declared_type = None
+
+            if not isinstance(next_arg, Identifier):
+                raise Exception(f'Function arguments must be identifiers, {next_arg.type} given')
+
+            pop_next(':')
+            declared_type = parse_factor()
+            if not isinstance(declared_type, Identifier):
+                raise Exception(f'Function arguments types must be identifiers, {declared_type.type} given')
+
+            declared_type = get_type_from_str(declared_type.name)
+            arguments.append(Argument(next_arg.name, declared_type))
+
+            if peek().text == ',':
+                pop_next(',')
+
+        pop_next(')')
+
+        declared_type = None
+        if peek().text == ':':
+            pop_next(':')
+            declared_type = parse_factor()
+            if not isinstance(declared_type, Identifier):
+                raise Exception(f'Function return type must be an identifier, {declared_type.type} given')
+            declared_type = get_type_from_str(declared_type.name)
+
+        body = parse_block()
+
+        return FuncDef(func_name, arguments, body, declared_type)
 
     def parse_function_call(identifier: Identifier) -> FuncCall:
         args = []

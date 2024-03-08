@@ -1,7 +1,7 @@
 from compiler.parser import parse
 from compiler.tokenizer import tokenize
-from compiler.ast import Expression, BinaryOp, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, Block, Var, While, Module
-from compiler.types import Int, Unit, Unknown
+from compiler.ast import Argument, Expression, BinaryOp, FuncDef, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, Block, Var, While, Module
+from compiler.types import Bool, Int, Unit, Unknown
 
 import unittest
 
@@ -320,7 +320,7 @@ class ParserTest(unittest.TestCase):
         ]))
     
     def test_parse_blocks_with_parens_and_functions(self):
-        assert parse(tokenize('{a = (1+2)/3; fun(a,y)}')) == module(Block(statements=[
+        assert parse(tokenize('{a = (1+2)/3; func(a,y)}')) == module(Block(statements=[
             BinaryOp(
                 left=Identifier('a'), 
                 op='=', 
@@ -334,7 +334,7 @@ class ParserTest(unittest.TestCase):
                     right=Literal(3)
                 )
             ),
-            FuncCall(name='fun', args=[Identifier('a'), Identifier('y')])
+            FuncCall(name='func', args=[Identifier('a'), Identifier('y')])
         ]))
     
     def test_parse_if_then_else_with_blocks(self):
@@ -450,6 +450,21 @@ class ParserTest(unittest.TestCase):
                            otherwise=While(cond=Literal(False), body=Block(statements=[Literal(None)])))
             ])
         ))
+
+    def test_parse_function_def(self):
+        assert parse(tokenize('fun do() {}')) == module(FuncDef(Identifier('do'), [], Block([Literal(None)])))
+
+    def test_parse_function_def_with_type(self):
+        assert parse(tokenize('fun do(): Int {}')) == module(FuncDef(Identifier('do'), [], Block([Literal(None)]), Int))
+
+    def test_parse_function_def_with_type_with_semi_colon(self):
+        assert parse(tokenize('fun do(): Int {};')) == module([FuncDef(Identifier('do'), [], Block([Literal(None)]), Int), Literal(None)])
+
+    def test_parse_function_def_with_type(self):
+        assert parse(tokenize('fun do(x: Int, y: Bool) {}')) == module(FuncDef(Identifier('do'), [Argument(name='x', declared_type=Int), Argument(name='y', declared_type=Bool)], Block([Literal(None)])))
+
+    def test_parse_function_def_with_type_with_return_type(self):
+        assert parse(tokenize('fun do(x: Int, y: Bool): Int {}')) == module(FuncDef(Identifier('do'), [Argument(name='x', declared_type=Int), Argument(name='y', declared_type=Bool)], Block([Literal(None)]), Int))
 
     def test_parse_erroneous_block(self):
         self.assertRaises(Exception, parse, tokenize('{ a b }'))

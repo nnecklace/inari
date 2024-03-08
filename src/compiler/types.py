@@ -6,7 +6,32 @@ type Bool = bool # type: ignore[valid-type]
 type Unit = None # type: ignore[valid-type]
 type Unknown = None # type: ignore[valid-type]
 
-type Type = Int | Bool | Callable | Unit | Unknown # type: ignore[valid-type]
+T = TypeVar('T')
+
+type PrimitiveType = Int | Bool | Unit | Unknow # type: ignore[valid-type]n
+
+class FunctionDefinition():
+    arguments: list[PrimitiveType]
+    return_type: PrimitiveType
+
+    def __init__(self: Self, arguments: list[PrimitiveType], return_type: PrimitiveType) -> None:
+        self.arguments = arguments
+        self.return_type = return_type
+
+    def __eq__(self: Self, other: object) -> bool:
+        if not isinstance(other, FunctionDefinition):
+            return NotImplemented
+
+        if len(other.arguments) != len(self.arguments):
+            return False
+
+        for i, obj in enumerate(other.arguments):
+            if obj != self.arguments[i]:
+                return False
+
+        return self.return_type == other.return_type
+
+type Type = PrimitiveType | Callable | FunctionDefinition # type: ignore[valid-type]
 
 type Value = int | bool | Callable | None # type: ignore[valid-type]
 
@@ -19,8 +44,6 @@ def get_type_from_str(type: str) -> Type: # type: ignore[valid-type]
         return Unit
     
     return Unknown
-
-T = TypeVar('T')
 
 class SymbolTable(Generic[T]):
     bindings: Dict[str, T]
@@ -63,7 +86,8 @@ def get_global_symbol_table_types() -> SymbolTable:
         'or': Callable[[Bool,Bool], Bool],
         'print_int': Callable[[Int], Unit],
         'print_bool': Callable[[Bool], Unit],
-        'read_int': Callable[[], Int]}, parent=None)
+        'read_int': Callable[[], Int]},
+        parent=None)
 
 def get_global_symbol_table() -> SymbolTable:
     return SymbolTable[Value](bindings={ # type: ignore[valid-type]
@@ -82,4 +106,5 @@ def get_global_symbol_table() -> SymbolTable:
         '!=': lambda x,y: x!=y,
         'print_int': lambda x: print(int(x), end='\n'),
         'print_bool': lambda x: print(bool(x), end='\n'),
-        'read_int': lambda: int(input())}, parent=None)
+        'read_int': lambda: int(input())},
+        parent=None)

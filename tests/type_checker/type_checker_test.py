@@ -1,7 +1,7 @@
 from compiler.parser import parse
 from compiler.tokenizer import tokenize
 from compiler.type_checker import typecheck_module
-from compiler.types import Int, Bool, Unit, Type, get_global_symbol_table_types
+from compiler.types import FunctionDefinition, Int, Bool, Unit, Type, get_global_symbol_table_types
 from compiler.ast import Module, Expression
 
 import unittest
@@ -91,6 +91,19 @@ class TypeCheckerTest(unittest.TestCase):
         sym = get_global_symbol_table_types()
         typecheck_module(p('var Bool: Int = 1'), sym)
         assert sym.bindings['Bool'] == Int
+
+    def test_typecheck_function_definition(self):
+        expr = p('fun test(): Int {1}')
+        expr_types = typecheck_module(expr, get_global_symbol_table_types())
+        assert find(expr.expressions[0], expr_types) == FunctionDefinition([], Int)
+
+    def test_typecheck_function_definition_with_args(self):
+        expr = p('fun test(x: Int, y: Bool, z: Unit): Int {1}')
+        expr_types = typecheck_module(expr, get_global_symbol_table_types())
+        assert find(expr.expressions[0], expr_types) == FunctionDefinition([Int, Bool, Unit], Int)
+
+    def test_typecheck_function_definition_with_args(self):
+        self.assertRaises(Exception, typecheck_module, p('fun test(x: Int, y: Bool, z: Unit): Int {true}'), get_global_symbol_table_types())
 
     def test_typecheck_simple_var_with_error_type(self):
         self.assertRaises(Exception, typecheck_module, p('var test: Int = true'), get_global_symbol_table_types())
