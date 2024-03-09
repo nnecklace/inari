@@ -1,7 +1,6 @@
 import os
 from compiler.assembler import assemble
-from compiler.assembly_generator import generate_assembly
-from compiler.ast import Expression
+from compiler.assembly_generator import generate_ns_assembly
 from compiler.ir import generate_root_var_types
 from compiler.ir_generator import generate_ir
 from compiler.parser import parse
@@ -18,7 +17,7 @@ def tokenize_parse_and_typecheck(inpt):
 
 def run_test_case(test_count, test_namespace, test_case):
     source, expected = test_case
-    assembly = generate_assembly(generate_ir(generate_root_var_types(), tokenize_parse_and_typecheck(source))['main'])
+    assembly = generate_ns_assembly(generate_ir(generate_root_var_types(), tokenize_parse_and_typecheck(source)))
     assemble(assembly, f'{test_namespace}_{test_count}_out')
     proc = subprocess.run([f'{os.getcwd()}/{test_namespace}_{test_count}_out'], capture_output = True, text = True)
     output = proc.stdout
