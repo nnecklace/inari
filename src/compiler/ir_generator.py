@@ -237,8 +237,8 @@ def generate_ir(
         var_counts['x'] = x_count
 
     ns_ins['main'] = ins
-    ins = []
     for f in functions:
+        ins = []
         visit(root_symtab, f.body)
         ns_ins[f.name.name] = ins
 
