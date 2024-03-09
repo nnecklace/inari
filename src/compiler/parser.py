@@ -253,7 +253,7 @@ def parse(tokens: list[Token]) -> Module:
                 pop_next()
         pop_next(')')
 
-        return FuncCall(name=identifier.name, args=args)
+        return FuncCall(name=identifier, args=args)
 
     def parse_binary_operation(operators: list[str], left: Expression) -> Expression:
         curr_precedence = left_associative_binary_operators.index(operators)

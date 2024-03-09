@@ -143,9 +143,12 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
     emit(f'.L{ns}_end:')
     emit('')
 
-    emit(f'movq $0, %rax')
-    emit(f'movq %rbp, %rsp')
-    emit(f'popq %rbp')
+    if ns == 'main':
+        emit(f'movq $0, %rax')
+        emit(f'movq %rbp, %rsp')
+        emit(f'popq %rbp')
+    else:
+        emit(f'leave')
     emit(f'ret')
 
     return ''.join(line+'\n' for line in lines)

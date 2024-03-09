@@ -86,7 +86,7 @@ def generate_ir(
             case FuncCall():
                 args = [visit(symbol_table, arg) for arg in expr.args]
                 var_result = new_var(expr.type)
-                ins.append(Call(loc, symbol_table.require(expr.name), args, var_result))
+                ins.append(Call(loc, symbol_table.require(expr.name.name), args, var_result))
                 return var_result
 
             case Identifier():

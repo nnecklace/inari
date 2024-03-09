@@ -9,7 +9,7 @@ regexes = {
     "comment": re.compile(r'(/{2,}|#).*'),
     "whitespace": re.compile(r'\s'),
     "identifier": re.compile(r'\b[A-Za-z_][A-Za-z0-9_]*\b(?<!\btrue|\bfalse|\band|\bor)'),
-    "int_literal": re.compile(r'\d+'),
+    "int_literal": re.compile(r'\b\d+\b'),
     "bool_literal": re.compile(r'\b(true|false)'),
     "operator": re.compile(r'(\+|-|%|\*|/|==|!=|<=|>=|>|<|=|and|or)'),
     "punctuation": re.compile(r'(\(|\)|{|}|,|;|:)')

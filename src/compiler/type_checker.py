@@ -76,7 +76,7 @@ def typecheck(node: Expression, symbol_table: SymbolTable) -> Type: # type: igno
         case FuncCall():
             return return_and_assign(
                 node, 
-                type_check_function(symbol_table.require(node.name), node.args, symbol_table)
+                type_check_function(symbol_table.require(node.name.name), node.args, symbol_table)
             )
 
         case BinaryOp():

@@ -74,19 +74,19 @@ class ParserTest(unittest.TestCase):
         ))
     
     def test_parse_function_calls_simple(self):
-        assert parse(tokenize('f(x)')) == module(FuncCall(name='f', args=[Identifier('x')]))
+        assert parse(tokenize('f(x)')) == module(FuncCall(name=Identifier('f'), args=[Identifier('x')]))
 
     def test_parse_function_calls_multi_args(self):
-        assert parse(tokenize('f(x,y,z)')) == module(FuncCall(name='f', args=[Identifier('x'), Identifier('y'), Identifier('z')]))
+        assert parse(tokenize('f(x,y,z)')) == module(FuncCall(name=Identifier('f'), args=[Identifier('x'), Identifier('y'), Identifier('z')]))
     
     def test_parse_function_calls_with_expression(self):
-        assert parse(tokenize('f(x+y)')) == module(FuncCall(name='f', args=[BinaryOp(left=Identifier('x'), op='+', right=Identifier('y'))]))
+        assert parse(tokenize('f(x+y)')) == module(FuncCall(name=Identifier('f'), args=[BinaryOp(left=Identifier('x'), op='+', right=Identifier('y'))]))
 
     def test_parse_function_calls_with_expression_with_parens(self):
-        assert parse(tokenize('f((x+y)+z)')) == module(FuncCall(name='f', args=[BinaryOp(left=BinaryOp(left=Identifier('x'), op='+', right=Identifier('y')), op='+', right=Identifier('z'))]))
+        assert parse(tokenize('f((x+y)+z)')) == module(FuncCall(name=Identifier('f'), args=[BinaryOp(left=BinaryOp(left=Identifier('x'), op='+', right=Identifier('y')), op='+', right=Identifier('z'))]))
 
     def test_parse_function_calls_with_expression_with_parens2(self):
-        assert parse(tokenize('f((x+y)+z+(y+8))')) == module(FuncCall(name='f', args=[
+        assert parse(tokenize('f((x+y)+z+(y+8))')) == module(FuncCall(name=Identifier('f'), args=[
             BinaryOp(
                 right=BinaryOp(
                     left=Identifier('y'), 
@@ -106,13 +106,13 @@ class ParserTest(unittest.TestCase):
             ))
     
     def test_parse_function_calls_with_many_parens(self):
-        assert parse(tokenize('f((((((((((((((1+1))))))))))))))')) == module(FuncCall(name='f', args=[BinaryOp(left=Literal(1),op='+',right=Literal(1))]))
+        assert parse(tokenize('f((((((((((((((1+1))))))))))))))')) == module(FuncCall(name=Identifier('f'), args=[BinaryOp(left=Literal(1),op='+',right=Literal(1))]))
     
     def test_parse_function_calls_with_nested_function_calls(self):
-        assert parse(tokenize('f(g(x), h(m(n(y))))')) == module(FuncCall(name='f', args=[FuncCall(name='g', args=[Identifier('x')]), FuncCall(name='h',args=[FuncCall(name='m', args=[FuncCall(name='n',args=[Identifier('y')])])])]))
+        assert parse(tokenize('f(g(x), h(m(n(y))))')) == module(FuncCall(name=Identifier('f'), args=[FuncCall(name=Identifier('g'), args=[Identifier('x')]), FuncCall(name=Identifier('h'),args=[FuncCall(name=Identifier('m'), args=[FuncCall(name=Identifier('n'),args=[Identifier('y')])])])]))
 
     def test_parse_function_calls_with_nested_function_call_and_expression(self):
-        assert parse(tokenize('f(x, g(x), y+x)')) == module(FuncCall(name='f', args=[Identifier('x'), FuncCall(name='g', args=[Identifier('x')]), BinaryOp(left=Identifier('y'), op='+', right=Identifier('x'))]))
+        assert parse(tokenize('f(x, g(x), y+x)')) == module(FuncCall(name=Identifier('f'), args=[Identifier('x'), FuncCall(name=Identifier('g'), args=[Identifier('x')]), BinaryOp(left=Identifier('y'), op='+', right=Identifier('x'))]))
 
     def test_parse_simple_assignment(self):
         assert parse(tokenize('a = b')) == module(BinaryOp(left=Identifier('a'), op='=', right=Identifier('b')))
@@ -233,9 +233,9 @@ class ParserTest(unittest.TestCase):
             left=Identifier('x'), 
             op='=', 
             right=Block(statements=[
-                FuncCall(name='f', args=[Identifier('a')]),
+                FuncCall(name=Identifier('f'), args=[Identifier('a')]),
                 BinaryOp(left=Identifier('x'), op='=', right=Identifier('y')),
-                FuncCall(name='f', args=[Identifier('x')]),
+                FuncCall(name=Identifier('f'), args=[Identifier('x')]),
                 Literal(value=None)
             ])))
 
@@ -307,7 +307,7 @@ class ParserTest(unittest.TestCase):
         assert parse(tokenize('x = { { f(a) } { b } }')) == module(BinaryOp(
             left=Identifier('x'),
             op='=',
-            right=Block(statements=[Block(statements=[FuncCall(args=[Identifier('a')], name='f')]), Block(statements=[Identifier('b')])])
+            right=Block(statements=[Block(statements=[FuncCall(args=[Identifier('a')], name=Identifier('f'))]), Block(statements=[Identifier('b')])])
         ))
     
     def test_parse_parens_with_block(self):
@@ -334,7 +334,7 @@ class ParserTest(unittest.TestCase):
                     right=Literal(3)
                 )
             ),
-            FuncCall(name='func', args=[Identifier('a'), Identifier('y')])
+            FuncCall(name=Identifier('func'), args=[Identifier('a'), Identifier('y')])
         ]))
     
     def test_parse_if_then_else_with_blocks(self):
@@ -467,7 +467,14 @@ class ParserTest(unittest.TestCase):
         assert parse(tokenize('fun do(x: Int, y: Bool): Int {}')) == module(FuncDef(Identifier('do'), [Argument(name='x', declared_type=Int), Argument(name='y', declared_type=Bool)], Block([Literal(None)]), Int))
 
     def test_parse_function_def_with_function_call(self):
-        assert parse(tokenize('fun do(): Unit {1+1;};do()')) == module([FuncDef(Identifier('do'), [], Block([BinaryOp(Literal(1), '+', Literal(1)),Literal(None)]), Unit), FuncCall([], 'do')])
+        assert parse(tokenize('fun do(): Unit {1+1;};do()')) == module([FuncDef(Identifier('do'), [], Block([BinaryOp(Literal(1), '+', Literal(1)),Literal(None)]), Unit), FuncCall([], Identifier('do'))])
+
+    def test_parse_function_call_inside_func_def(self):
+        assert parse(tokenize('fun do(): Int {1+1};fun do2(): Int {do()}; do2()')) == module([
+            FuncDef(Identifier('do'), [], Block([BinaryOp(Literal(1), '+', Literal(1))]), Int),
+            FuncDef(Identifier('do2'), [], Block([FuncCall([], Identifier('do'))]), Int),
+            FuncCall([], Identifier('do2')) 
+        ])
 
     def test_parse_erroneous_block(self):
         self.assertRaises(Exception, parse, tokenize('{ a b }'))

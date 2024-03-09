@@ -75,7 +75,7 @@ class Var(Expression):
 @dataclass
 class FuncCall(Expression):
     args: list[Expression]
-    name: str # TODO: Change to identifier
+    name: Identifier
 
 @dataclass
 class Block(Expression):

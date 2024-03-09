@@ -127,6 +127,12 @@ class TokenizerTest(unittest.TestCase):
             Token(location=LL, type='punctuation', text=')')
         ])
 
+    def test_tokenizer_identifier(self) -> None:
+        assert tokenize('var x2') == append_and_prepend_block([
+            Token(text='var', type='identifier', location=LL), 
+            Token(text='x2', type='identifier', location=LL)
+        ])
+
     def test_tokenizer_recognizes_blocks(self) -> None:
         assert tokenize('{}') == append_and_prepend_block([
             Token(location=LL, type='punctuation', text='{'),
@@ -175,6 +181,25 @@ class TokenizerTest(unittest.TestCase):
             Token(location=LL, type='int_literal', text='1000'),
             Token(location=LL, type='operator', text='!='),
             Token(location=LL, type='int_literal', text='5')
+        ])
+    
+    def test_tokenizer_function_definition(self) -> None:
+        assert tokenize('fun do2(): Int {do()}; do2()') == append_and_prepend_block([
+            Token(location=LL, type='identifier', text='fun'),
+            Token(location=LL, type='identifier', text='do2'),
+            Token(location=LL, type='punctuation', text='('),
+            Token(location=LL, type='punctuation', text=')'),
+            Token(location=LL, type='punctuation', text=':'),
+            Token(location=LL, type='identifier', text='Int'),
+            Token(location=LL, type='punctuation', text='{'),
+            Token(location=LL, type='identifier', text='do'),
+            Token(location=LL, type='punctuation', text='('),
+            Token(location=LL, type='punctuation', text=')'),
+            Token(location=LL, type='punctuation', text='}'),
+            Token(location=LL, type='punctuation', text=';'),
+            Token(location=LL, type='identifier', text='do2'),
+            Token(location=LL, type='punctuation', text='('),
+            Token(location=LL, type='punctuation', text=')')
         ])
     
     def test_tokenizer_break_and_continue(self) -> None:
