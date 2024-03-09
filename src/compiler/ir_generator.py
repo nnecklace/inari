@@ -1,7 +1,7 @@
 from typing import Dict
 from compiler.types import Bool, Int, Type, Unit, SymbolTable
 from compiler.ir import Call, CondJump, IRVar, Instruction, LoadBoolConst, LoadIntConst, Label, Copy, Jump
-from compiler.ast import BreakContinue, Expression, Literal, Identifier, BinaryOp, IfThenElse, Block, Var, While, UnaryOp, Module, FuncCall
+from compiler.ast import BreakContinue, Expression, FuncDef, Literal, Identifier, BinaryOp, IfThenElse, Block, Var, While, UnaryOp, Module, FuncCall
 
 def generate_ir(
     # 'root_types' parameter should map all global names
@@ -29,6 +29,8 @@ def generate_ir(
     ins: list[Instruction] = []
     loop_context: list[tuple[Label, Label]] = []
     ns_ins: Dict[str, list[Instruction]] = {'main': []}
+
+    functions: list[FuncDef] = []
 
     # This function visits an AST node,
     # appends IR instructions to 'ins',
@@ -76,11 +78,16 @@ def generate_ir(
 
                 return var_unit
 
-            case FuncCall():
-                args = [visit(arg, symbol_table) for arg in expr.args]
-                var_result = new_var(Unit)
-                ins.append(Call(loc, symbol_table.require(expr.name), args, var_result))
+            case FuncDef():
+                functions.append(expr)
+                symbol_table.add_local(expr.name.name, IRVar(expr.name.name))
                 return var_unit
+
+            case FuncCall():
+                args = [visit(symbol_table, arg) for arg in expr.args]
+                var_result = new_var(expr.type)
+                ins.append(Call(loc, symbol_table.require(expr.name), args, var_result))
+                return var_result
 
             case Identifier():
                 # Look up the IR variable that corresponds to
@@ -131,7 +138,7 @@ def generate_ir(
                 var_op = symbol_table.require(expr.op)
                 var_left = visit(symbol_table, expr.left)
                 var_right = visit(symbol_table, expr.right)
-                var_result = new_var(expr.type)             
+                var_result = new_var(expr.type)
 
                 ins.append(Call(loc, var_op, [var_left, var_right], var_result))
                 return var_result
@@ -230,5 +237,9 @@ def generate_ir(
         var_counts['x'] = x_count
 
     ns_ins['main'] = ins
+    ins = []
+    for f in functions:
+        visit(root_symtab, f.body)
+        ns_ins[f.name.name] = ins
 
     return ns_ins

@@ -10,7 +10,7 @@ T = TypeVar('T')
 
 type PrimitiveType = Int | Bool | Unit | Unknow # type: ignore[valid-type]n
 
-class FunctionDefinition():
+class FunctionSignature():
     arguments: list[PrimitiveType]
     return_type: PrimitiveType
 
@@ -19,7 +19,7 @@ class FunctionDefinition():
         self.return_type = return_type
 
     def __eq__(self: Self, other: object) -> bool:
-        if not isinstance(other, FunctionDefinition):
+        if not isinstance(other, FunctionSignature):
             return NotImplemented
 
         if len(other.arguments) != len(self.arguments):
@@ -31,7 +31,7 @@ class FunctionDefinition():
 
         return self.return_type == other.return_type
 
-type Type = PrimitiveType | Callable | FunctionDefinition # type: ignore[valid-type]
+type Type = PrimitiveType | FunctionSignature # type: ignore[valid-type]
 
 type Value = int | bool | Callable | None # type: ignore[valid-type]
 
@@ -67,29 +67,29 @@ class SymbolTable(Generic[T]):
         
         raise Exception(f'No symbol {name} found')
 
-def get_global_symbol_table_types() -> SymbolTable:
+def get_global_symbol_table_types() -> SymbolTable[Type]:
     return SymbolTable[Type](bindings={ # type: ignore[valid-type]
-        'unary_-': Callable[[Int], Int],
-        'unary_not':Callable[[Bool], Bool],
-        '+': Callable[[Int,Int], Int],
-        '-': Callable[[Int,Int], Int],
-        '*': Callable[[Int,Int], Int],
-        '/': Callable[[Int,Int], Int],
-        '%': Callable[[Int,Int], Int],
-        '<': Callable[[Int,Int], Bool],
-        '>': Callable[[Int,Int], Bool],
-        '<=': Callable[[Int,Int], Bool],
-        '>=': Callable[[Int,Int], Bool],
-        '==': Callable[[Int,Int], Bool], # these should take any types
-        '!=': Callable[[Int,Int], Bool], # these should take any types
-        'and': Callable[[Bool,Bool], Bool],
-        'or': Callable[[Bool,Bool], Bool],
-        'print_int': Callable[[Int], Unit],
-        'print_bool': Callable[[Bool], Unit],
-        'read_int': Callable[[], Int]},
+        'unary_-': FunctionSignature([Int], Int),
+        'unary_not':FunctionSignature([Bool], Bool),
+        '+': FunctionSignature([Int,Int], Int),
+        '-': FunctionSignature([Int,Int], Int),
+        '*': FunctionSignature([Int,Int], Int),
+        '/': FunctionSignature([Int,Int], Int),
+        '%': FunctionSignature([Int,Int], Int),
+        '<': FunctionSignature([Int,Int], Bool),
+        '>': FunctionSignature([Int,Int], Bool),
+        '<=': FunctionSignature([Int,Int], Bool),
+        '>=': FunctionSignature([Int,Int], Bool),
+        '==': FunctionSignature([Int,Int], Bool), # these should take any types
+        '!=': FunctionSignature([Int,Int], Bool), # these should take any types
+        'and': FunctionSignature([Bool,Bool], Bool),
+        'or': FunctionSignature([Bool,Bool], Bool),
+        'print_int': FunctionSignature([Int], Unit),
+        'print_bool': FunctionSignature([Bool], Unit),
+        'read_int': FunctionSignature([], Int)},
         parent=None)
 
-def get_global_symbol_table() -> SymbolTable:
+def get_global_symbol_table() -> SymbolTable[Value]:
     return SymbolTable[Value](bindings={ # type: ignore[valid-type]
         'unary_-': lambda x: -x,
         'unary_not': lambda x: not x,

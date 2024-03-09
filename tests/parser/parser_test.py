@@ -466,6 +466,9 @@ class ParserTest(unittest.TestCase):
     def test_parse_function_def_with_type_with_return_type(self):
         assert parse(tokenize('fun do(x: Int, y: Bool): Int {}')) == module(FuncDef(Identifier('do'), [Argument(name='x', declared_type=Int), Argument(name='y', declared_type=Bool)], Block([Literal(None)]), Int))
 
+    def test_parse_function_def_with_function_call(self):
+        assert parse(tokenize('fun do(): Unit {1+1;};do()')) == module([FuncDef(Identifier('do'), [], Block([BinaryOp(Literal(1), '+', Literal(1)),Literal(None)]), Unit), FuncCall([], 'do')])
+
     def test_parse_erroneous_block(self):
         self.assertRaises(Exception, parse, tokenize('{ a b }'))
 

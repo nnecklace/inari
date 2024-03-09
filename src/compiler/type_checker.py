@@ -1,5 +1,5 @@
 from compiler.ast import BreakContinue, Expression, BinaryOp, FuncDef, Literal, Identifier, UnaryOp, Var, Block, While, IfThenElse, FuncCall, Module
-from compiler.types import FunctionDefinition, Int, Type, Bool, Unit, SymbolTable, Value
+from compiler.types import FunctionSignature, Int, Type, Bool, Unit, SymbolTable, Value
 from typing import Any, Callable, Dict, get_args
 
 def get_type(value: Value) -> Type: # type: ignore[valid-type]
@@ -17,13 +17,12 @@ def args_match(arg_types: list[Type], args: list[Type]) -> bool: # type: ignore[
     
     return True
 
-def type_check_function(name: str, arguments: list[Expression], symbol_table: SymbolTable) -> Any:
-    signature = get_args(symbol_table.require(name))
+def type_check_function(func: FunctionSignature, arguments: list[Expression], symbol_table: SymbolTable) -> Any:
     passed_args = [typecheck(arg, symbol_table) for arg in arguments]
-    if args_match(signature[0], passed_args):
-        return signature[1]
+    if args_match(func.arguments, passed_args):
+        return func.return_type
     else:
-        raise Exception(f'Argument missmatch for {name} expecting arguments with types {signature[0]} got {passed_args}')
+        raise Exception(f'Argument missmatch for function expecting arguments with types {[func.arguments]} got {passed_args}')
 
 def return_and_assign(node: Expression, type: Type) -> Type: # type: ignore[valid-type]
     node.type = type
@@ -50,7 +49,7 @@ def typecheck(node: Expression, symbol_table: SymbolTable) -> Type: # type: igno
         case UnaryOp():
             return return_and_assign(
                 node,
-                type_check_function('unary_'+node.op, [node.right], symbol_table)
+                type_check_function(symbol_table.require('unary_'+node.op), [node.right], symbol_table)
             )
 
         case FuncDef():
@@ -65,12 +64,19 @@ def typecheck(node: Expression, symbol_table: SymbolTable) -> Type: # type: igno
 
             args = [arg.declared_type for arg in node.args]
 
-            return return_and_assign(node, FunctionDefinition(args, t))
+            for arg in node.args:
+                symbol_table.add_local(f'{node.name}_{arg.name}', arg.declared_type)
+
+            func_def = FunctionSignature(args, t)
+
+            symbol_table.add_local(node.name.name, func_def)
+
+            return return_and_assign(node, func_def)
 
         case FuncCall():
             return return_and_assign(
                 node, 
-                type_check_function(node.name, node.args, symbol_table)
+                type_check_function(symbol_table.require(node.name), node.args, symbol_table)
             )
 
         case BinaryOp():
@@ -87,7 +93,7 @@ def typecheck(node: Expression, symbol_table: SymbolTable) -> Type: # type: igno
 
             return return_and_assign(
                 node, 
-                type_check_function(node.op, [node.left, node.right], symbol_table)
+                type_check_function(symbol_table.require(node.op), [node.left, node.right], symbol_table)
             )
 
         case IfThenElse():

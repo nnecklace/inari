@@ -49,14 +49,29 @@ def get_all_ir_variables(instructions: list[Instruction]) -> list[IRVar]:
                         add(v)
     return result_list 
 
+def emit_global(ns: list[str]) -> str:
+    lines = []
+    lines.append('.extern print_int')
+    lines.append('.extern print_bool')
+    lines.append('.extern read_int')
+    for n in ns:
+        lines.append(f'.global {n}')
+    for n in ns:
+        lines.append(f'.type {n}, @function')
+    lines.append('')
+    lines.append('.section .text')
+    lines.append('')
+
+    return ''.join(line+'\n' for line in lines)
+
 def generate_ns_assembly(ns_ins: Dict[str, list[Instruction]]) -> str:
     assembly = []
-    for ins in ns_ins.values():
-        assembly.append(generate_assembly(ins))
+    for k, v in ns_ins.items():
+        assembly.append(generate_assembly(k,v))
 
-    return ''.join(ass+'\n' for ass in assembly)
+    return emit_global(ns_ins.keys())+''.join(ass+'\n' for ass in assembly)
 
-def generate_assembly(instructions: list[Instruction]) -> str:
+def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
     lines = []
     def emit(line: str) -> None: lines.append(line)
 
@@ -66,20 +81,13 @@ def generate_assembly(instructions: list[Instruction]) -> str:
         variables=vars
     )
 
-    emit('.extern print_int')
-    emit('.extern print_bool')
-    emit('.extern read_int')
-    emit('.global main')
-    emit('.type main, @function')
-    emit('')
-    emit('.section .text')
-    emit('')
-    emit('main:')
+    emit(f'{ns}:')
     emit(f'pushq %rbp')
     emit(f'movq %rsp, %rbp')
     emit(f'subq ${locals._stack_used}, %rsp')
     emit('')
-    emit('.Lstart:')
+    emit(f'.L{ns}_start:')
+    emit('')
 
     for insn in instructions:
         emit('# ' + str(insn))
@@ -89,7 +97,7 @@ def generate_assembly(instructions: list[Instruction]) -> str:
                 # ".L" prefix marks the symbol as "private".
                 # This makes GDB backtraces look nicer too:
                 # https://stackoverflow.com/a/26065570/965979
-                emit(f'.L{insn.name}:')
+                emit(f'.L{ns}_{insn.name}:')
             case LoadBoolConst():
                 v = 0
                 if insn.value == True:
@@ -111,11 +119,11 @@ def generate_assembly(instructions: list[Instruction]) -> str:
                     emit(f'movabsq ${insn.value}, %rax')
                     emit(f'movq %rax, {locals.get_ref(insn.dest)}')
             case Jump():
-                emit(f'jmp .L{insn.label.name}')
+                emit(f'jmp .L{ns}_{insn.label.name}')
             case CondJump():
                 emit(f'cmpq $0, {locals.get_ref(insn.cond)}')
-                emit(f'jne .L{insn.then_label.name}')
-                emit(f'jmp .L{insn.else_label.name}')
+                emit(f'jne .L{ns}_{insn.then_label.name}')
+                emit(f'jmp .L{ns}_{insn.else_label.name}')
             case Call():
                 if insn.fun.name in all_intrinsics:
                     all_intrinsics[insn.fun.name](IntrinsicArgs(
@@ -123,12 +131,17 @@ def generate_assembly(instructions: list[Instruction]) -> str:
                         result_register='%rax',
                         emit=emit
                     ))
-
-                if insn.fun.name == 'print_int' or insn.fun.name == 'print_bool':
+                elif insn.fun.name == 'print_int' or insn.fun.name == 'print_bool':
                     emit(f'movq {locals.get_ref(insn.args[0])}, %rdi')
                     emit(f'callq {insn.fun.name}')
+                else:
+                    emit(f'call {insn.fun.name}')
 
                 emit(f'movq %rax, {locals.get_ref(insn.dest)}')
+
+    emit('')
+    emit(f'.L{ns}_end:')
+    emit('')
 
     emit(f'movq $0, %rax')
     emit(f'movq %rbp, %rsp')

@@ -62,9 +62,12 @@ def main() -> int:
         assemble(asm, 'out')
     elif command == 'ir':
         source = tokenize_parse_and_typecheck(read_source_code())
-        ins = generate_ir(generate_root_var_types(),source)['main']
-        for i in ins:
-            print(i)
+        ins = generate_ir(generate_root_var_types(),source)
+        for k, v in ins.items():
+            print(f'{k}:')
+            for ins in v:
+                print(ins)
+            print()
     elif command == 'asm':
         source = tokenize_parse_and_typecheck(read_source_code())
         ins = generate_ir(generate_root_var_types(),source)

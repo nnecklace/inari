@@ -1,7 +1,7 @@
 from compiler.parser import parse
 from compiler.tokenizer import tokenize
 from compiler.type_checker import typecheck_module
-from compiler.types import FunctionDefinition, Int, Bool, Unit, Type, get_global_symbol_table_types
+from compiler.types import FunctionSignature, Int, Bool, Unit, Type, get_global_symbol_table_types
 from compiler.ast import Module, Expression
 
 import unittest
@@ -95,12 +95,12 @@ class TypeCheckerTest(unittest.TestCase):
     def test_typecheck_function_definition(self):
         expr = p('fun test(): Int {1}')
         expr_types = typecheck_module(expr, get_global_symbol_table_types())
-        assert find(expr.expressions[0], expr_types) == FunctionDefinition([], Int)
+        assert find(expr.expressions[0], expr_types) == FunctionSignature([], Int)
 
     def test_typecheck_function_definition_with_args(self):
         expr = p('fun test(x: Int, y: Bool, z: Unit): Int {1}')
         expr_types = typecheck_module(expr, get_global_symbol_table_types())
-        assert find(expr.expressions[0], expr_types) == FunctionDefinition([Int, Bool, Unit], Int)
+        assert find(expr.expressions[0], expr_types) == FunctionSignature([Int, Bool, Unit], Int)
 
     def test_typecheck_function_definition_with_args(self):
         self.assertRaises(Exception, typecheck_module, p('fun test(x: Int, y: Bool, z: Unit): Int {true}'), get_global_symbol_table_types())
