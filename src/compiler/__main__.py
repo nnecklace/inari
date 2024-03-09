@@ -58,7 +58,7 @@ def main() -> int:
     elif command == 'compile':
         source = tokenize_parse_and_typecheck(read_source_code())
         ins = generate_ir(generate_root_var_types(),source)
-        asm = generate_assembly(ins)
+        asm = generate_ns_assembly(ins)
         assemble(asm, 'out')
     elif command == 'ir':
         source = tokenize_parse_and_typecheck(read_source_code())
