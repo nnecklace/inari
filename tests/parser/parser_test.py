@@ -482,12 +482,20 @@ class ParserTest(unittest.TestCase):
             FuncCall([Literal(8), Literal(6)], Identifier('square_and_add'))
         ])
 
-    def test_parse_function_call__with_binary_op(self):
+    def test_parse_function_call_with_binary_op(self):
         assert parse(tokenize('s(1,1) + f(3,3)')) == module(BinaryOp(
             FuncCall([Literal(1), Literal(1)], Identifier('s')),
             '+',
             FuncCall([Literal(3), Literal(3)], Identifier('f'))
         ))
+
+    def test_parse_function_program(self):
+        assert parse(tokenize('fun square(x: Int): Int { x * x } fun vec_len_squared(x: Int, y: Int): Int { square(x) + square(y) } fun print_int_twice(x: Int) { print_int(x); print_int(x); } print_int_twice(vec_len_squared(3, 4))')) == module([
+            FuncDef(Identifier('square'), [Argument('x', Int)], Block([BinaryOp(Identifier('x'), '*', Identifier('x'))]), Int),
+            FuncDef(Identifier('vec_len_squared'), [Argument('x', Int), Argument('y', Int)], Block([BinaryOp(FuncCall([Identifier('x')], Identifier('square')), '+', FuncCall([Identifier('y')], Identifier('square')))]), Int),
+            FuncDef(Identifier('print_int_twice'), [Argument('x', Int)], Block([FuncCall([Identifier('x')], Identifier('print_int')), FuncCall([Identifier('x')], Identifier('print_int')), Literal(None)]), None),
+            FuncCall([FuncCall([Literal(3), Literal(4)], Identifier('vec_len_squared'))], Identifier('print_int_twice'))
+        ])
 
     def test_parse_erroneous_block(self):
         self.assertRaises(Exception, parse, tokenize('{ a b }'))

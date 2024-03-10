@@ -122,7 +122,7 @@ def parse(tokens: list[Token]) -> Module:
 
     def includes_end_block(expr: Expression | None) -> bool:
         match expr:
-            case Block():
+            case Block() | FuncDef():
                 return True
             case Var():
                 return includes_end_block(expr.initialization)
