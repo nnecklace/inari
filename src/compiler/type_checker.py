@@ -30,6 +30,17 @@ def return_and_assign(node: Expression, type: Type) -> Type: # type: ignore[vali
 
 def typecheck_module(module: Module, root_table: SymbolTable[Type]) -> list[tuple[Expression, Type]]:
     expr_types: list[tuple[Expression, Type]] = []
+    fun_defs = [expr for expr in module.expressions if isinstance(expr, FuncDef)]
+    
+    # To allow for mutual recursion, we process the functions first briefly, later we check their bodies
+    for f in fun_defs:
+        args = [arg.declared_type for arg in f.args]
+        t = f.declared_type
+        if not t:
+            t = Unit
+        func_def = FunctionSignature(args, t)
+        root_table.add_local(f.name.name, func_def)
+
     for expr in module.expressions:
         expr_types.append((expr, typecheck(expr, root_table)))
 
@@ -53,27 +64,17 @@ def typecheck(node: Expression, symbol_table: SymbolTable[Type]) -> Type: # type
             )
 
         case FuncDef():
-            args = [arg.declared_type for arg in node.args]
-
+            func = symbol_table.require(node.name.name)
             new_symbol_table = SymbolTable[Type](bindings={}, parent=symbol_table) # type: ignore[valid-type]
-
             for arg in node.args:
                 new_symbol_table.add_local(arg.name, arg.declared_type)
 
-            t = node.declared_type
             body = typecheck(node.body, new_symbol_table)
 
-            if not t:
-                t = Unit
+            if func.return_type is not body:
+                raise Exception(f'Function {node.name} return type must be same as given type, mismatch {func.return_type} =/= {body}')
 
-            if t is not body:
-                raise Exception(f'Function {node.name} return type must be same as given type, mismatch {t} =/= {body}')
-
-            func_def = FunctionSignature(args, t)
-
-            symbol_table.add_local(node.name.name, func_def)
-
-            return return_and_assign(node, func_def)
+            return return_and_assign(node, func)
 
         case FuncCall():
             return return_and_assign(
