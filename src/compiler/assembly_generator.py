@@ -1,5 +1,5 @@
 from typing import Dict
-from compiler.ir import Instruction, IRVar, Label, LoadIntConst, Jump, LoadBoolConst, Copy, CondJump, Call
+from compiler.ir import Instruction, IRVar, Label, LoadBoolParam, LoadIntConst, Jump, LoadBoolConst, Copy, CondJump, Call, LoadIntParam
 from dataclasses import fields
 from compiler.intrinsics import all_intrinsics, IntrinsicArgs
 from compiler.types import get_global_symbol_table_types
@@ -73,6 +73,8 @@ def generate_ns_assembly(ns_ins: Dict[str, list[Instruction]]) -> str:
 
 def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
     lines = []
+    param_registers = ['%rdi', '%rsi', '%rdx', '%rcx', '%r8', '%r9']
+    param_count = 0
     def emit(line: str) -> None: lines.append(line)
 
     vars = get_all_ir_variables(instructions)
@@ -118,6 +120,9 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
                     # as a temporary.
                     emit(f'movabsq ${insn.value}, %rax')
                     emit(f'movq %rax, {locals.get_ref(insn.dest)}')
+            case LoadIntParam() | LoadBoolParam():
+                emit(f'movq {param_registers[param_count]}, {locals.get_ref(insn.dest)}')
+                param_count += 1
             case Jump():
                 emit(f'jmp .L{ns}_{insn.label.name}')
             case CondJump():
@@ -135,7 +140,10 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
                     emit(f'movq {locals.get_ref(insn.args[0])}, %rdi')
                     emit(f'callq {insn.fun.name}')
                 else:
+                    for indx, arg in enumerate(insn.args):
+                        emit(f'movq {locals.get_ref(arg)}, {param_registers[indx]}')
                     emit(f'call {insn.fun.name}')
+                    #emit(f'addq ${8*insn.args}, %rsp')
 
                 emit(f'movq %rax, {locals.get_ref(insn.dest)}')
 

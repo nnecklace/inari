@@ -73,6 +73,16 @@ class CondJump(Instruction):
     then_label: Label
     else_label: Label
 
+@dataclass(frozen=True)
+class LoadIntParam(Instruction):
+    symbol: IRVar
+    dest: IRVar
+
+@dataclass(frozen=True)
+class LoadBoolParam(Instruction):
+    symbol: IRVar
+    dest: IRVar
+
 def generate_root_var_types() -> Dict[IRVar, Type]: # type: ignore[valid-type]
     global_types = get_global_symbol_table_types().bindings
     root_types = {}

@@ -102,6 +102,8 @@ class TypeCheckerTest(unittest.TestCase):
         expr_types = typecheck_module(expr, get_global_symbol_table_types())
         assert find(expr.expressions[0], expr_types) == FunctionSignature([Int, Bool, Unit], Int)
 
+    # TODO: Add tests for function calls with params for custom functions
+
     def test_typecheck_function_definition_with_args(self):
         self.assertRaises(Exception, typecheck_module, p('fun test(x: Int, y: Bool, z: Unit): Int {true}'), get_global_symbol_table_types())
 

@@ -1,6 +1,6 @@
 from typing import Dict
 from compiler.types import Bool, Int, Type, Unit, SymbolTable
-from compiler.ir import Call, CondJump, IRVar, Instruction, LoadBoolConst, LoadIntConst, Label, Copy, Jump
+from compiler.ir import Call, CondJump, IRVar, Instruction, LoadBoolConst, LoadIntConst, Label, Copy, Jump, LoadIntParam, LoadBoolParam
 from compiler.ast import BreakContinue, Expression, FuncDef, Literal, Identifier, BinaryOp, IfThenElse, Block, Var, While, UnaryOp, Module, FuncCall
 
 def generate_ir(
@@ -85,6 +85,7 @@ def generate_ir(
 
             case FuncCall():
                 args = [visit(symbol_table, arg) for arg in expr.args]
+
                 var_result = new_var(expr.type)
                 ins.append(Call(loc, symbol_table.require(expr.name.name), args, var_result))
                 return var_result
@@ -202,10 +203,11 @@ def generate_ir(
                 return var_result
 
             case Block():
+                new_symbol_table = SymbolTable[IRVar](bindings={}, parent=symbol_table)
                 for exp in expr.statements[:len(expr.statements)-1]:
-                    visit(symbol_table, exp)
+                    visit(new_symbol_table, exp)
                 
-                return visit(symbol_table, expr.statements[-1])
+                return visit(new_symbol_table, expr.statements[-1])
             
         raise Exception('Unknown expression type')
 
@@ -239,7 +241,15 @@ def generate_ir(
     ns_ins['main'] = ins
     for f in functions:
         ins = []
-        visit(root_symtab, f.body)
+        new_symbol_table = SymbolTable[IRVar](bindings={}, parent=root_symtab)
+        for arg in f.args:
+            param = new_var(arg.declared_type)
+            if arg.declared_type is Int:
+                ins.append(LoadIntParam(arg.location, IRVar(arg.name), param))
+            else:
+                ins.append(LoadBoolParam(arg.location, IRVar(arg.name), param))
+            new_symbol_table.add_local(arg.name, param)
+        visit(new_symbol_table, f.body)
         ns_ins[f.name.name] = ins
 
     return ns_ins

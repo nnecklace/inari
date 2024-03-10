@@ -1,6 +1,6 @@
 from compiler.ast import BreakContinue, Expression, BinaryOp, FuncDef, Literal, Identifier, UnaryOp, Var, Block, While, IfThenElse, FuncCall, Module
 from compiler.types import FunctionSignature, Int, Type, Bool, Unit, SymbolTable, Value
-from typing import Any, Callable, Dict, get_args
+from typing import Any
 
 def get_type(value: Value) -> Type: # type: ignore[valid-type]
     if value is int:
@@ -28,14 +28,14 @@ def return_and_assign(node: Expression, type: Type) -> Type: # type: ignore[vali
     node.type = type
     return type
 
-def typecheck_module(module: Module, root_table: SymbolTable) -> list[tuple[Expression, Type]]:
+def typecheck_module(module: Module, root_table: SymbolTable[Type]) -> list[tuple[Expression, Type]]:
     expr_types: list[tuple[Expression, Type]] = []
     for expr in module.expressions:
         expr_types.append((expr, typecheck(expr, root_table)))
 
     return expr_types
 
-def typecheck(node: Expression, symbol_table: SymbolTable) -> Type: # type: ignore[valid-type]
+def typecheck(node: Expression, symbol_table: SymbolTable[Type]) -> Type: # type: ignore[valid-type]
     match node:
         case Literal():
             return return_and_assign(node, get_type(type(node.value)))
@@ -53,19 +53,21 @@ def typecheck(node: Expression, symbol_table: SymbolTable) -> Type: # type: igno
             )
 
         case FuncDef():
+            args = [arg.declared_type for arg in node.args]
+
+            new_symbol_table = SymbolTable[Type](bindings={}, parent=symbol_table) # type: ignore[valid-type]
+
+            for arg in node.args:
+                new_symbol_table.add_local(arg.name, arg.declared_type)
+
             t = node.declared_type
-            body = typecheck(node.body, symbol_table)
+            body = typecheck(node.body, new_symbol_table)
 
             if not t:
                 t = Unit
 
             if t is not body:
                 raise Exception(f'Function {node.name} return type must be same as given type, mismatch {t} =/= {body}')
-
-            args = [arg.declared_type for arg in node.args]
-
-            for arg in node.args:
-                symbol_table.add_local(f'{node.name}_{arg.name}', arg.declared_type)
 
             func_def = FunctionSignature(args, t)
 
