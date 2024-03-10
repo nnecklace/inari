@@ -222,3 +222,23 @@ class TokenizerTest(unittest.TestCase):
             Token(location=LL, type='identifier', text='continue'),
             Token(location=LL, type='punctuation', text='}'),
         ])
+    
+    def test_tokenizer_func_name(self) -> None: 
+        assert tokenize('fun square_and_add(x: Int): Int {x*x+1}') == append_and_prepend_block([
+            Token(location=LL, type='identifier', text='fun'),
+            Token(location=LL, type='identifier', text='square_and_add'),
+            Token(location=LL, type='punctuation', text='('),
+            Token(location=LL, type='identifier', text='x'),
+            Token(location=LL, type='punctuation', text=':'),
+            Token(location=LL, type='identifier', text='Int'),
+            Token(location=LL, type='punctuation', text=')'),
+            Token(location=LL, type='punctuation', text=':'),
+            Token(location=LL, type='identifier', text='Int'),
+            Token(location=LL, type='punctuation', text='{'),
+            Token(location=LL, type='identifier', text='x'),
+            Token(location=LL, type='operator', text='*'),
+            Token(location=LL, type='identifier', text='x'),
+            Token(location=LL, type='operator', text='+'),
+            Token(location=LL, type='int_literal', text='1'),
+            Token(location=LL, type='punctuation', text='}')
+        ])

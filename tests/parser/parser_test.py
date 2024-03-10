@@ -476,6 +476,19 @@ class ParserTest(unittest.TestCase):
             FuncCall([], Identifier('do2')) 
         ])
 
+    def test_parse_function_call_binary_op(self):
+        assert parse(tokenize('fun square_and_add(x: Int, y: Int): Int {x*x+y}; square_and_add(8,6)')) == module([
+            FuncDef(Identifier('square_and_add'), [Argument('x', Int), Argument('y', Int)], Block([BinaryOp(BinaryOp(Identifier('x'), '*', Identifier('x')), '+', Identifier('y'))]), Int),
+            FuncCall([Literal(8), Literal(6)], Identifier('square_and_add'))
+        ])
+
+    def test_parse_function_call__with_binary_op(self):
+        assert parse(tokenize('s(1,1) + f(3,3)')) == module(BinaryOp(
+            FuncCall([Literal(1), Literal(1)], Identifier('s')),
+            '+',
+            FuncCall([Literal(3), Literal(3)], Identifier('f'))
+        ))
+
     def test_parse_erroneous_block(self):
         self.assertRaises(Exception, parse, tokenize('{ a b }'))
 

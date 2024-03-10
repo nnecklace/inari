@@ -11,7 +11,7 @@ regexes = {
     "identifier": re.compile(r'\b[A-Za-z_][A-Za-z0-9_]*\b(?<!\btrue|\bfalse|\band|\bor)'),
     "int_literal": re.compile(r'\b\d+\b'),
     "bool_literal": re.compile(r'\b(true|false)'),
-    "operator": re.compile(r'(\+|-|%|\*|/|==|!=|<=|>=|>|<|=|and|or)'),
+    "operator": re.compile(r'(\+|-|%|\*|/|==|!=|<=|>=|>|<|=|\band|\bor)'),
     "punctuation": re.compile(r'(\(|\)|{|}|,|;|:)')
 }
 

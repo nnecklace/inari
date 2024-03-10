@@ -182,7 +182,11 @@ def parse(tokens: list[Token]) -> Module:
             elif text == 'break' or text == 'continue':
                 return parse_break_continue()
             else:
-                return parse_identifier()
+                Identifier = parse_identifier()
+                if peek().text == '(':
+                    return parse_function_call(Identifier)
+                
+                return Identifier
         elif token_type == 'operator' and text == '-':
             return parse_unary_op()
         else:
@@ -197,10 +201,10 @@ def parse(tokens: list[Token]) -> Module:
     def parse_function_definition() -> FuncDef:
         pop_next('fun')
 
-        func_name = parse_factor()
+        if peek().type != 'identifier':
+            raise Exception(f'Function definition must be an identifier, {peek().type} given')
 
-        if not isinstance(func_name, Identifier):
-            raise Exception(f'Function definition must be an identifier, {func_name.type} given')
+        func_name = parse_identifier()
 
         arguments = []
         pop_next('(')
@@ -277,9 +281,6 @@ def parse(tokens: list[Token]) -> Module:
 
     def parse_expression() -> Expression:
         left = parse_factor()
-
-        if isinstance(left, Identifier) and peek().text == '(':
-            return parse_function_call(left)
 
         for operator in left_associative_binary_operators:
             left = parse_binary_operation(operator, left)
