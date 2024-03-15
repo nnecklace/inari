@@ -70,7 +70,9 @@ class Var(Expression):
         if not isinstance(other, Var):
             return NotImplemented
 
-        return self.initialization == other.initialization and self.name == other.name
+        return self.initialization == other.initialization and \
+            self.name == other.name and \
+            self.declared_type == other.declared_type
 
 @dataclass
 class FuncCall(Expression):

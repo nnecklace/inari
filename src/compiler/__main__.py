@@ -73,6 +73,8 @@ def main() -> int:
         ins = generate_ir(generate_root_var_types(),source)
         asm = generate_ns_assembly(ins)
         print(asm)
+    elif command == 'tc':
+        print(tokenize_parse_and_typecheck(read_source_code()))
     else:
         print(f"Error: unknown command: {command}\n\n{usage}", file=sys.stderr)
         return 1

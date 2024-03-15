@@ -143,7 +143,7 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
                     for indx, arg in enumerate(insn.args):
                         emit(f'movq {locals.get_ref(arg)}, {param_registers[indx]}')
                     emit(f'call {insn.fun.name}')
-                    #emit(f'addq ${8*insn.args}, %rsp')
+                    # TODO: emit proper commands when params are more than registers
 
                 emit(f'movq %rax, {locals.get_ref(insn.dest)}')
 

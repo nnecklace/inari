@@ -1,7 +1,7 @@
 from compiler.parser import parse
 from compiler.tokenizer import tokenize
 from compiler.ast import Argument, Expression, BinaryOp, FuncDef, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, Block, Var, While, Module
-from compiler.types import Bool, Int, Unit, Unknown
+from compiler.types import Bool, Int, Pointer, Unit, Unknown
 
 import unittest
 
@@ -497,6 +497,61 @@ class ParserTest(unittest.TestCase):
             FuncCall([FuncCall([Literal(3), Literal(4)], Identifier('vec_len_squared'))], Identifier('print_int_twice'))
         ])
 
+    def test_parse_unary_operator(self):
+        assert parse(tokenize('-p * -p')) == module(
+            BinaryOp(UnaryOp('-', Identifier('p')), '*', UnaryOp('-', Identifier('p')))
+        )
+
+    def test_parse_deference_operator(self):
+        assert parse(tokenize('*p * *p')) == module(
+            BinaryOp(UnaryOp('*', Identifier('p')), '*', UnaryOp('*', Identifier('p')))
+        )
+
+    def test_parse_deference_and_unary_minus_operator(self):
+        assert parse(tokenize('var p = *p * -p')) == module(
+            Var(Identifier('p'), BinaryOp(UnaryOp('*', Identifier('p')), '*', UnaryOp('-', Identifier('p'))))
+        )
+
+    def test_parse_unary_with_block(self):
+        assert parse(tokenize('-{1+1}')) == module(
+            UnaryOp('-', Block([BinaryOp(Literal(1), '+', Literal(1))]))
+        )
+
+    def test_parse_int_pointer(self):
+        pointer = Pointer()
+        pointer.value = Int
+        assert parse(tokenize('var x: Int* = &y')) == module(
+            Var(Identifier('x'), UnaryOp('&', Identifier('y')), pointer)
+        )
+
+    def test_parse_int_pointer_to_pointers(self):
+        pointer = Pointer()
+        pointer.value = Pointer()
+        pointer.value.value = Pointer()
+        pointer.value.value.value = Int
+        assert parse(tokenize('var x: Int*** = &y')) == module(
+            Var(Identifier('x'), UnaryOp('&', Identifier('y')), pointer)
+        )
+
+    def test_parse_pointers_with_pointers_to_pointers(self):
+        pointer_x = Pointer()
+        pointer_x.value = Int
+
+        pointer_y = Pointer()
+        pointer_y.value = pointer_x
+        assert parse(tokenize('var x: Int = 1; var y: Int* = &x; var z: Int** = &y;')) == module([
+            Var(Identifier('x'), Literal(1), Int),
+            Var(Identifier('y'), UnaryOp('&', Identifier('x')), pointer_x),
+            Var(Identifier('z'), UnaryOp('&', Identifier('y')), pointer_y),
+            Literal(None)
+        ])
+
+    def test_parse_multi_unary_operators(self):
+        assert parse(tokenize('var x: Int = --2; x')) == module([
+            Var(Identifier('x'), UnaryOp('-', UnaryOp('-', Literal(2))), Int),
+            Identifier('x')
+        ])
+
     def test_parse_erroneous_block(self):
         self.assertRaises(Exception, parse, tokenize('{ a b }'))
 
@@ -513,7 +568,7 @@ class ParserTest(unittest.TestCase):
         self.assertRaises(Exception, parse, tokenize('_a + b) * 2'))
 
     def test_parse_erroneous_input_3(self):
-        self.assertRaises(Exception, parse, tokenize('(12 + b) * 2 / (2 + 2) ** 2'))
+        self.assertRaises(Exception, parse, tokenize('(12 + b) * 2 / (2 + 2) */ 2'))
 
     def test_parse_erroneous_var(self):
         self.assertRaises(Exception, parse, tokenize('var 1 = 2'))

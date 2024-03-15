@@ -1,6 +1,7 @@
+from inspect import isclass
 from compiler.ast import BreakContinue, Expression, BinaryOp, FuncDef, Literal, Identifier, UnaryOp, Var, Block, While, IfThenElse, FuncCall, Module
-from compiler.types import FunctionSignature, Int, Type, Bool, Unit, SymbolTable, Value
-from typing import Any
+from compiler.types import FunctionSignature, Int, Pointer, PrimitiveType, Type, Bool, Unit, SymbolTable, Value
+from typing import Any, get_args
 
 def get_type(value: Value) -> Type: # type: ignore[valid-type]
     if value is int:
@@ -12,7 +13,13 @@ def get_type(value: Value) -> Type: # type: ignore[valid-type]
 
 def args_match(arg_types: list[Type], args: list[Type]) -> bool: # type: ignore[valid-type]
     for indx, arg in enumerate(args):
-        if arg is not arg_types[indx]:
+        if arg_types[indx] is Type:
+            if arg is not Int and arg is not Bool and not isinstance(arg, Pointer) and arg is not Pointer:
+                return False
+        elif arg_types[indx] is Pointer:
+            if not isinstance(arg, Pointer):
+                return False
+        elif arg is not arg_types[indx]:
             return False
     
     return True
@@ -20,9 +27,16 @@ def args_match(arg_types: list[Type], args: list[Type]) -> bool: # type: ignore[
 def type_check_function(func: FunctionSignature, arguments: list[Expression], symbol_table: SymbolTable) -> Any:
     passed_args = [typecheck(arg, symbol_table) for arg in arguments]
     if args_match(func.arguments, passed_args):
+        if func.return_type is Pointer:
+            # this is a hack to get pointers to work
+            return_type = Pointer()
+            return_type.value = passed_args[0]
+
+            return return_type
+
         return func.return_type
     else:
-        raise Exception(f'Argument missmatch for function expecting arguments with types {[func.arguments]} got {passed_args}')
+        raise Exception(f'Argument missmatch for function expecting arguments with types {func.arguments} got {passed_args}')
 
 def return_and_assign(node: Expression, type: Type) -> Type: # type: ignore[valid-type]
     node.type = type
@@ -45,6 +59,13 @@ def typecheck_module(module: Module, root_table: SymbolTable[Type]) -> list[tupl
         expr_types.append((expr, typecheck(expr, root_table)))
 
     return expr_types
+
+def var_in_args(var_type: Type, expected_types: tuple[Any]) -> bool:
+    for t in expected_types:
+        if var_type is t or type(var_type) is t:
+            return True
+
+    return False
 
 def typecheck(node: Expression, symbol_table: SymbolTable[Type]) -> Type: # type: ignore[valid-type]
     match node:
@@ -121,12 +142,17 @@ def typecheck(node: Expression, symbol_table: SymbolTable[Type]) -> Type: # type
             return return_and_assign(node, typecheck(node.body, symbol_table))
 
         case Var():
+            # TODO: Clean this up
             variable_type = node.declared_type
             initialization_type = typecheck(node.initialization, symbol_table)
-            if variable_type != None and variable_type is not initialization_type:
-                raise Exception(f'Variable {node.name.name} declared type {variable_type} does not match with initialization {initialization_type}')
+            if (initialization_type is Type and not var_in_args(variable_type, get_args(initialization_type))) or\
+               (initialization_type is not Type and variable_type != None and ((variable_type is not initialization_type) and (variable_type != initialization_type))):
+                    raise Exception(f'Variable {node.name.name} declared type {variable_type} does not match with initialization {initialization_type}')
             
-            symbol_table.add_local(node.name.name, initialization_type)
+            if (initialization_type is Type and var_in_args(variable_type, get_args(initialization_type))):
+               symbol_table.add_local(node.name.name, variable_type)
+            else:
+               symbol_table.add_local(node.name.name, initialization_type)
 
             return return_and_assign(node, initialization_type)
         

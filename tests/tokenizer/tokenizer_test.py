@@ -4,6 +4,8 @@ from compiler.location import L
 
 import unittest
 
+# TODO: Write more tests
+
 LL = L('', 0, 0)
 
 def append_and_prepend_block(tokens: list[Token]) -> list[Token]:
@@ -51,6 +53,14 @@ class TokenizerTest(unittest.TestCase):
             Token(location=LL, type='int_literal', text='5'),
             Token(location=LL, type='operator', text='+'),
             Token(location=LL, type='int_literal', text='4')
+        ])
+
+    def test_tokenizer_unary(self) -> None:
+        assert tokenize('3 + &x') == append_and_prepend_block([
+            Token(location=LL, type='int_literal', text='3'),
+            Token(location=LL, type='operator', text='+'),
+            Token(location=LL, type='operator', text='&'),
+            Token(location=LL, type='identifier', text='x')
         ])
 
     def test_tokenizer_with_arithmetic_operations_without_spaces(self) -> None:

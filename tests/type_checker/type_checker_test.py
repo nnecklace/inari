@@ -1,7 +1,7 @@
 from compiler.parser import parse
 from compiler.tokenizer import tokenize
 from compiler.type_checker import typecheck_module
-from compiler.types import FunctionSignature, Int, Bool, Unit, Type, get_global_symbol_table_types
+from compiler.types import FunctionSignature, Int, Bool, Pointer, Unit, Type, get_global_symbol_table_types
 from compiler.ast import Module, Expression
 
 import unittest
@@ -101,6 +101,35 @@ class TypeCheckerTest(unittest.TestCase):
         expr = p('fun test(x: Int, y: Bool, z: Unit): Int {1}')
         expr_types = typecheck_module(expr, get_global_symbol_table_types())
         assert find(expr.expressions[0], expr_types) == FunctionSignature([Int, Bool, Unit], Int)
+
+    def test_typecheck_unary_pointers(self):
+        pointer = Pointer()
+        pointer.value = Int
+        expr = p('var x: Int = 1; var y: Int* = &x; y')
+        expr_types = typecheck_module(expr, get_global_symbol_table_types())
+        assert find(expr.expressions[2], expr_types) == pointer
+
+    def test_typecheck_unary_pointer_to_pointer(self):
+        pointer = Pointer()
+        pointer.value = Pointer()
+        pointer.value.value = Int
+        expr = p('var x: Int = 1; var y: Int* = &x; var z: Int** = &y; z')
+        expr_types = typecheck_module(expr, get_global_symbol_table_types())
+        assert find(expr.expressions[3], expr_types) == pointer
+
+    def test_typecheck_unary_pointer_dereference(self):
+        expr = p('var x: Int = 1; var y: Int* = &x; var z: Int = *y; z')
+        expr_types = typecheck_module(expr, get_global_symbol_table_types())
+        assert find(expr.expressions[3], expr_types) == Int
+
+    def test_typecheck_unary_pointer_dereference_to_pointer(self):
+        pointer = Pointer()
+        pointer.value = Int
+        expr = p('var x: Int = 1; var y: Int* = &x; var z: Int** = &y; var n: Int* = *z; n')
+        expr_types = typecheck_module(expr, get_global_symbol_table_types())
+        assert find(expr.expressions[4], expr_types) == pointer
+
+    # TODO: var x: Int = 1; var y: Int* = &x; var z: Int** = &y; var n: Int = **z; n
 
     # TODO: Add tests for function calls with params for custom functions
 

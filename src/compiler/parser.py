@@ -1,7 +1,8 @@
+from compiler import types
 from compiler.location import Location
 from compiler.tokenizer import Token
 from compiler.ast import Argument, Expression, BinaryOp, FuncDef, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, While, Var, Block, BreakContinue, Module
-from compiler.types import get_type_from_str
+from compiler.types import get_type_from_str, Type
 
 def parse(tokens: list[Token]) -> Module:
     # reverse tokens such that list works as a stack
@@ -33,6 +34,17 @@ def parse(tokens: list[Token]) -> Module:
 
         return token
 
+    def parse_declared_type(err: str) -> Type:
+        pop_next(':')
+        declared_type = parse_factor()
+        if not isinstance(declared_type, Identifier):
+            raise Exception(err)
+
+        while peek().text == '*':
+            declared_type.name += pop_next('*').text
+
+        return get_type_from_str(declared_type.name)
+
     def parse_bool_literal() -> Literal:
         next = pop_next().text
         if next.lower() == 'true':
@@ -54,30 +66,30 @@ def parse(tokens: list[Token]) -> Module:
 
     def parse_if_then_else() -> Expression:
         pop_next('if')
-        cond = parse_block_or_expression()
+        cond = parse_expression()
 
         pop_next('then')
-        then = parse_block_or_expression()
+        then = parse_expression()
 
         if_then_else = IfThenElse(cond=cond, then=then)
 
         if peek().text == 'else':
             pop_next('else')
-            if_then_else.otherwise = parse_block_or_expression()
+            if_then_else.otherwise = parse_expression()
 
         return if_then_else
 
-    def parse_unary_op() -> Expression:
+    def parse_unary_op() -> UnaryOp:
         return UnaryOp(
             op=pop_next().text,
-            right=parse_expression()
+            right=parse_factor()
         )
 
     def parse_while() -> Expression:
         pop_next('while')
-        condition = parse_block_or_expression()
+        condition = parse_expression()
         pop_next('do')
-        body = parse_block_or_expression()
+        body = parse_expression()
 
         return While(
             cond=condition,
@@ -95,15 +107,11 @@ def parse(tokens: list[Token]) -> Module:
         declared_type = None
 
         if peek().text == ':':
-            pop_next(':')
-            declared_type = parse_factor()
-            if not isinstance(declared_type, Identifier):
-                raise Exception(f'Expceted variable {identifier} type to be an identifier')
-            declared_type = get_type_from_str(declared_type.name)
+            declared_type = parse_declared_type(f'Expceted variable {identifier} type to be an identifier')
 
         if peek().text == '=':
             pop_next('=')
-            initialization = parse_block_or_expression()
+            initialization = parse_expression()
 
         following = peek()
 
@@ -140,7 +148,7 @@ def parse(tokens: list[Token]) -> Module:
         statements = []
         pop_next('{')
         while peek().text != '}' and peek().type != 'end':
-            block_or_expression = parse_block_or_expression()
+            block_or_expression = parse_expression()
             statements.append(block_or_expression)
             if peek().text == ';':
                 pop_next(';')
@@ -182,19 +190,25 @@ def parse(tokens: list[Token]) -> Module:
             elif text == 'break' or text == 'continue':
                 return parse_break_continue()
             else:
-                Identifier = parse_identifier()
+                identifier = parse_identifier()
                 if peek().text == '(':
-                    return parse_function_call(Identifier)
+                    return parse_function_call(identifier)
                 
-                return Identifier
-        elif token_type == 'operator' and text == '-':
-            return parse_unary_op()
+                return identifier
+        elif token_type == 'operator' and (text == '-' or text == '&' or text == '*'):
+            operator = parse_unary_op()
+
+            # we do it as it is done in C
+            if (text == '&' or text == '*') and not isinstance(operator.right, Identifier):
+                raise Exception(f'Operator & and * must be followed by an Identifier')
+
+            return operator
         else:
             raise Exception(f'{peek().location}: expected an integer literal or an identifier')
 
     def parse_parenthesized() -> Expression:
         pop_next('(')
-        expr = parse_block_or_expression()
+        expr = parse_expression()
         pop_next(')')
         return expr
 
@@ -217,12 +231,7 @@ def parse(tokens: list[Token]) -> Module:
             if not isinstance(next_arg, Identifier):
                 raise Exception(f'Function arguments must be identifiers, {next_arg.type} given')
 
-            pop_next(':')
-            declared_type = parse_factor()
-            if not isinstance(declared_type, Identifier):
-                raise Exception(f'Function arguments types must be identifiers, {declared_type.type} given')
-
-            declared_type = get_type_from_str(declared_type.name)
+            declared_type = parse_declared_type(f'Function arguments types must be identifiers')
             arguments.append(Argument(next_arg.name, declared_type))
 
             if peek().text == ',':
@@ -232,11 +241,7 @@ def parse(tokens: list[Token]) -> Module:
 
         declared_type = None
         if peek().text == ':':
-            pop_next(':')
-            declared_type = parse_factor()
-            if not isinstance(declared_type, Identifier):
-                raise Exception(f'Function return type must be an identifier, {declared_type.type} given')
-            declared_type = get_type_from_str(declared_type.name)
+            declared_type = parse_declared_type(f'Function return type must be an identifier')
 
         body = parse_block()
 
@@ -248,7 +253,7 @@ def parse(tokens: list[Token]) -> Module:
         while peek().text != ')':
             if peek().type == 'end':
                 raise Exception(f'{peek().location}: expected )')
-            args.append(parse_block_or_expression())
+            args.append(parse_expression())
 
             if isinstance(args[-1], Var):
                 raise Exception('Var is only allowed directly inside blocks {} and in top-level expressions')
@@ -287,7 +292,7 @@ def parse(tokens: list[Token]) -> Module:
 
         if peek().text == '=':
             op = pop_next().text # operator
-            right = parse_block_or_expression() # right term
+            right = parse_expression() # right term
 
             return BinaryOp(
                 left,
@@ -297,13 +302,7 @@ def parse(tokens: list[Token]) -> Module:
 
         return left
 
-    def parse_block_or_expression() -> Expression:
-        if peek().text == '{':
-            return parse_block()
-        else:
-            return parse_expression()
-
-    root = parse_block()
+    root = parse_expression()
 
     if tokens:
         raise Exception(f'Unparsable exception, tokens left unparsed {tokens}')
