@@ -129,6 +129,16 @@ class TypeCheckerTest(unittest.TestCase):
         expr_types = typecheck_module(expr, get_global_symbol_table_types())
         assert find(expr.expressions[4], expr_types) == pointer
 
+    def test_typecheck_unary_pointer_dereference_to_correct_type(self):
+        expr = p('fun square(p: Int): Int { p = p * p } var x: Int = 3; square(x); x')
+        expr_types = typecheck_module(expr, get_global_symbol_table_types())
+        assert find(expr.expressions[-1], expr_types) == Int
+
+    def test_typecheck_unary_pointer_dereference_to_correct_type(self):
+        expr = p('fun square(p: Int*): Unit { *p = *p * *p; } var x: Int = 3; square(&x); x')
+        expr_types = typecheck_module(expr, get_global_symbol_table_types())
+        assert find(expr.expressions[-1], expr_types) == Int
+
     # TODO: var x: Int = 1; var y: Int* = &x; var z: Int** = &y; var n: Int = **z; n
 
     # TODO: Add tests for function calls with params for custom functions

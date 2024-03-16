@@ -19,6 +19,9 @@ def args_match(arg_types: list[Type], args: list[Type]) -> bool: # type: ignore[
         elif arg_types[indx] is Pointer:
             if not isinstance(arg, Pointer):
                 return False
+        elif isinstance(arg_types[indx], Pointer):
+            if not isinstance(arg, Pointer) or arg != arg_types[indx]:
+                return False
         elif arg is not arg_types[indx]:
             return False
     
@@ -33,6 +36,11 @@ def type_check_function(name: str, func: FunctionSignature, arguments: list[Expr
             return_type.value = passed_args[0]
 
             return return_type
+
+        if func.return_type is Type and name == 'unary_*':
+            # this is again a hack for pointers
+            return_arg = passed_args[0]
+            return return_arg.value
 
         return func.return_type
     else:
