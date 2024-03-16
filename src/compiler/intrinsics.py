@@ -20,6 +20,7 @@ def _intrinsic(name: str) -> Callable[[Intrinsic], Intrinsic]:
         return f
     return wrapper
 
+# TODO: test functions with pointers
 @_intrinsic("unary_*")
 def unary_pointer_reference(a: IntrinsicArgs) -> None:
     a.emit(f'movq {a.arg_refs[0]}, {a.result_register}')
@@ -34,12 +35,10 @@ def unary_minus(a: IntrinsicArgs) -> None:
     a.emit(f'movq {a.arg_refs[0]}, {a.result_register}')
     a.emit(f'negq {a.result_register}')
 
-
 @_intrinsic("unary_not")
 def unary_not(a: IntrinsicArgs) -> None:
     a.emit(f'movq {a.arg_refs[0]}, {a.result_register}')
     a.emit(f'xorq $1, {a.result_register}')
-
 
 @_intrinsic("+")
 def plus(a: IntrinsicArgs) -> None:

@@ -117,8 +117,8 @@ def get_global_symbol_table_types() -> SymbolTable[Type]:
         '>': FunctionSignature([Int,Int], Bool),
         '<=': FunctionSignature([Int,Int], Bool),
         '>=': FunctionSignature([Int,Int], Bool),
-        '==': FunctionSignature([Int,Int], Bool), # these should take any types
-        '!=': FunctionSignature([Int,Int], Bool), # these should take any types
+        '==': FunctionSignature([Int,Int], Bool), # TODO: these should take any types
+        '!=': FunctionSignature([Int,Int], Bool), # TODO: these should take any types
         'and': FunctionSignature([Bool,Bool], Bool),
         'or': FunctionSignature([Bool,Bool], Bool),
         'print_int': FunctionSignature([Int], Unit),

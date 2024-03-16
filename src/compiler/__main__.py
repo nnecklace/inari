@@ -4,7 +4,7 @@ from compiler.ast import Expression
 from compiler.ir import generate_root_var_types
 from compiler.tokenizer import tokenize
 from compiler.parser import parse
-from compiler.ir_generator import generate_blocks, generate_flow_graph, generate_ir
+from compiler.ir_generator import DataFlow, generate_blocks, generate_flow_graph, generate_ir
 from compiler.type_checker import typecheck_module
 from compiler.types import get_global_symbol_table_types
 from compiler.assembly_generator import generate_assembly, generate_ns_assembly
@@ -69,6 +69,15 @@ def main() -> int:
                 print(i)
             print()
 
+    elif command == 'flowgraph':
+        source = tokenize_parse_and_typecheck(read_source_code())
+        ins = generate_ir(generate_root_var_types(),source)
+        for k, v in ins.items():
+            print(f'{k}:')
+            for i in v:
+                print(i)
+            print()
+
         print()
         blocks = generate_blocks(ins)
         for k, bs in blocks.items():
@@ -84,6 +93,31 @@ def main() -> int:
             print('Block: \n' + ''.join(i[0].__str__()+'\n' for i in g['block']))
             print('Edges: \n' + ''.join(j+' ' for j in g['edges']))
             print()
+
+    elif command == 'dataflow':
+        source = tokenize_parse_and_typecheck(read_source_code())
+        ins = generate_ir(generate_root_var_types(),source)
+        for k, v in ins.items():
+            print(f'{k}:')
+            for i in v:
+                print(i)
+            print()
+
+        print()
+        blocks = generate_blocks(ins)
+        for k, bs in blocks.items():
+            for b in bs:
+                print('Printing block')
+                print(''.join(i[0].__str__()+'\n' for i in b))
+
+        dataflow = DataFlow(blocks)
+
+        dataflow.compute()
+        print('Input flows')
+        dataflow.print_in_flows()
+        print('===========================')
+        print('Output flows')
+        dataflow.print_out_flows()
 
     elif command == 'asm':
         source = tokenize_parse_and_typecheck(read_source_code())
