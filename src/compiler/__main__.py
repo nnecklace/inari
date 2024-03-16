@@ -4,7 +4,7 @@ from compiler.ast import Expression
 from compiler.ir import generate_root_var_types
 from compiler.tokenizer import tokenize
 from compiler.parser import parse
-from compiler.ir_generator import generate_ir
+from compiler.ir_generator import generate_blocks, generate_flow_graph, generate_ir
 from compiler.type_checker import typecheck_module
 from compiler.types import get_global_symbol_table_types
 from compiler.assembly_generator import generate_assembly, generate_ns_assembly
@@ -65,9 +65,26 @@ def main() -> int:
         ins = generate_ir(generate_root_var_types(),source)
         for k, v in ins.items():
             print(f'{k}:')
-            for ins in v:
-                print(ins)
+            for i in v:
+                print(i)
             print()
+
+        print()
+        blocks = generate_blocks(ins)
+        for k, bs in blocks.items():
+            for b in bs:
+                print('Printing block')
+                print(''.join(i[0].__str__()+'\n' for i in b))
+
+        graph = generate_flow_graph(blocks)
+
+        for l, g in graph.items():
+            print('------------')
+            print('Node label: ' + l + '\n')
+            print('Block: \n' + ''.join(i[0].__str__()+'\n' for i in g['block']))
+            print('Edges: \n' + ''.join(j+' ' for j in g['edges']))
+            print()
+
     elif command == 'asm':
         source = tokenize_parse_and_typecheck(read_source_code())
         ins = generate_ir(generate_root_var_types(),source)

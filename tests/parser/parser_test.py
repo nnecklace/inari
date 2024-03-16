@@ -552,6 +552,8 @@ class ParserTest(unittest.TestCase):
             Identifier('x')
         ])
 
+    # TODO: test **p
+
     def test_parse_erroneous_block(self):
         self.assertRaises(Exception, parse, tokenize('{ a b }'))
 

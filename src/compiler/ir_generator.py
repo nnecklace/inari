@@ -3,6 +3,48 @@ from compiler.types import Bool, Int, Type, Unit, SymbolTable
 from compiler.ir import Call, CondJump, IRVar, Instruction, LoadBoolConst, LoadIntConst, Label, Copy, Jump, LoadIntParam, LoadBoolParam
 from compiler.ast import BreakContinue, Expression, FuncDef, Literal, Identifier, BinaryOp, IfThenElse, Block, Var, While, UnaryOp, Module, FuncCall
 
+def generate_blocks(ins: Dict[str, list[Instruction]]) -> Dict[str, list[list[IRVar]]]:
+    block_dict = {}
+
+    unique_indx = 0
+
+    for name, instructions in ins.items():
+        block_dict[name] = []
+        block = []
+        for instruction in instructions:
+            if isinstance(instruction, Label) and len(block) > 0:
+                block_dict[name].append(block)
+                block = []
+            block.append((instruction, unique_indx))
+            unique_indx += 1
+            if isinstance(instruction, CondJump) or isinstance(instruction, Jump):
+                block_dict[name].append(block)
+                block = []
+
+        if block:
+            block_dict[name].append(block)
+
+    return block_dict
+
+def generate_flow_graph(ns_blocks: Dict[str, list[list[IRVar]]]) -> Dict[str, Dict[str, list[IRVar | str]]]:
+    graph = {}
+
+    for name, blocks in ns_blocks.items():
+        for i, block in enumerate(blocks):
+            graph[block[0][0].name] = {'block': block,
+                                    'edges': []}
+
+            if isinstance(block[0][-1], Jump):
+                graph[block[0][0].name]['edges'].append(block[0][-1].label.name)
+            elif isinstance(block[0][-1], CondJump):
+                graph[block[0][0].name]['edges'].append(block[0][-1].then_label.name)
+                graph[block[0][0].name]['edges'].append(block[0][-1].else_label.name)
+            else:
+                if i+1 < len(blocks):
+                    graph[block[0][0].name]['edges'].append(blocks[i+1][0][0].name)
+
+    return graph
+
 def generate_ir(
     # 'root_types' parameter should map all global names
     # like 'print_int' and '+' to their types.
@@ -222,6 +264,7 @@ def generate_ir(
         root_symtab.add_local(v.name, v)
 
     # Start visiting the AST from the root.
+    ins.append(Label(root_module.location, 'Start_1'))
     for exp in root_module.expressions[:len(root_module.expressions)-1]:
         visit(root_symtab, exp)
 
@@ -241,6 +284,7 @@ def generate_ir(
     ns_ins['main'] = ins
     for f in functions:
         ins = []
+        ins.append(Label(f.location, f'Start_{f.name.name}'))
         new_symbol_table = SymbolTable[IRVar](bindings={}, parent=root_symtab)
         for arg in f.args:
             param = new_var(arg.declared_type)

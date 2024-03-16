@@ -8,11 +8,9 @@ class IntrinsicArgs():
     result_register: str
     emit: Callable[[str], None]
 
-
 Intrinsic = Callable[[IntrinsicArgs], None]
 
 all_intrinsics: dict[str, Intrinsic] = {}
-
 
 def _intrinsic(name: str) -> Callable[[Intrinsic], Intrinsic]:
     """Function decorator that registers that function as an intrinsic."""
@@ -21,7 +19,6 @@ def _intrinsic(name: str) -> Callable[[Intrinsic], Intrinsic]:
         all_intrinsics[name] = f
         return f
     return wrapper
-
 
 @_intrinsic("unary_*")
 def unary_pointer_reference(a: IntrinsicArgs) -> None:
