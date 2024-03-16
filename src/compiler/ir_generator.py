@@ -1,6 +1,6 @@
 from typing import Dict, Self, Set
 from compiler.types import Bool, Int, Type, Unit, SymbolTable
-from compiler.ir import Call, CondJump, IRVar, Instruction, LoadBoolConst, LoadIntConst, Label, Copy, Jump, LoadIntParam, LoadBoolParam
+from compiler.ir import Call, CondJump, IRVar, Instruction, LoadBoolConst, LoadIntConst, Label, Copy, Jump, LoadIntParam, LoadBoolParam, LoadPointerParam
 from compiler.ast import BreakContinue, Expression, FuncDef, Literal, Identifier, BinaryOp, IfThenElse, Block, Var, While, UnaryOp, Module, FuncCall
 
 def generate_blocks(ins: Dict[str, list[Instruction]]) -> Dict[str, list[list[tuple[IRVar, int]]]]:
@@ -188,7 +188,7 @@ class DataFlow:
 
     def transfer(self: Self, index: int, instruction: Instruction) -> None:
         match instruction:
-            case LoadBoolConst() | LoadIntConst() | Copy()| Call() | LoadIntParam() | LoadBoolParam():
+            case LoadBoolConst() | LoadIntConst() | Copy()| Call() | LoadIntParam() | LoadBoolParam() | LoadPointerParam():
                 dest = instruction.dest.name
                 curr_in = self.inp[index].copy()
                 for key in curr_in.keys():
@@ -441,8 +441,11 @@ def generate_ir(
             param = new_var(arg.declared_type)
             if arg.declared_type is Int:
                 ins.append(LoadIntParam(arg.location, IRVar(arg.name), param))
-            else:
+            elif arg.declared_type is Bool:
                 ins.append(LoadBoolParam(arg.location, IRVar(arg.name), param))
+            else:
+                # argument has to be pointer
+                ins.append(LoadPointerParam(arg.location, IRVar(arg.name), param))
             new_symbol_table.add_local(arg.name, param)
         visit(new_symbol_table, f.body)
         ns_ins[f.name.name] = ins

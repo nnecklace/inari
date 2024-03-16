@@ -1,5 +1,5 @@
 from typing import Dict
-from compiler.ir import Instruction, IRVar, Label, LoadBoolParam, LoadIntConst, Jump, LoadBoolConst, Copy, CondJump, Call, LoadIntParam
+from compiler.ir import Instruction, IRVar, Label, LoadBoolParam, LoadIntConst, Jump, LoadBoolConst, Copy, CondJump, Call, LoadIntParam, LoadPointerParam
 from dataclasses import fields
 from compiler.intrinsics import all_intrinsics, IntrinsicArgs
 from compiler.types import get_global_symbol_table_types
@@ -122,6 +122,9 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
                     emit(f'movq %rax, {locals.get_ref(insn.dest)}')
             case LoadIntParam() | LoadBoolParam():
                 emit(f'movq {param_registers[param_count]}, {locals.get_ref(insn.dest)}')
+                param_count += 1
+            case LoadPointerParam():
+                emit(f'leaq {param_registers[param_count]}, {locals.get_ref(insn.dest)}')
                 param_count += 1
             case Jump():
                 emit(f'jmp .L{ns}_{insn.label.name}')

@@ -83,6 +83,11 @@ class LoadBoolParam(Instruction):
     symbol: IRVar
     dest: IRVar
 
+@dataclass(frozen=True)
+class LoadPointerParam(Instruction):
+    symbol: IRVar
+    dest: IRVar
+
 def generate_root_var_types() -> Dict[IRVar, Type]: # type: ignore[valid-type]
     global_types = get_global_symbol_table_types().bindings
     root_types = {}

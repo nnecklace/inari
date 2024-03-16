@@ -22,12 +22,12 @@ def _intrinsic(name: str) -> Callable[[Intrinsic], Intrinsic]:
 
 # TODO: test functions with pointers
 @_intrinsic("unary_*")
-def unary_pointer_reference(a: IntrinsicArgs) -> None:
+def unary_pointer_dereference(a: IntrinsicArgs) -> None:
     a.emit(f'movq {a.arg_refs[0]}, {a.result_register}')
     a.emit(f'movq ({a.result_register}), {a.result_register}')
 
 @_intrinsic("unary_&")
-def unary_pointer_dereference(a: IntrinsicArgs) -> None:
+def unary_pointer_reference(a: IntrinsicArgs) -> None:
     a.emit(f'leaq {a.arg_refs[0]}, {a.result_register}')
 
 @_intrinsic("unary_-")
