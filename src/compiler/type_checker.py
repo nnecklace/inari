@@ -115,7 +115,7 @@ def typecheck(node: Expression, symbol_table: SymbolTable[Type]) -> Type: # type
             if node.op in ['=', '!=', '==']:
                 left_type = typecheck(node.left, symbol_table)
                 right_type = typecheck(node.right, symbol_table)
-                if left_type is right_type:
+                if left_type is right_type or left_type == right_type:
                     if node.op == '=':
                         return return_and_assign(node, right_type)
                     else:
