@@ -120,11 +120,8 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
                     # as a temporary.
                     emit(f'movabsq ${insn.value}, %rax')
                     emit(f'movq %rax, {locals.get_ref(insn.dest)}')
-            case LoadIntParam() | LoadBoolParam():
+            case LoadIntParam() | LoadBoolParam() | LoadPointerParam():
                 emit(f'movq {param_registers[param_count]}, {locals.get_ref(insn.dest)}')
-                param_count += 1
-            case LoadPointerParam():
-                emit(f'leaq {param_registers[param_count]}, {locals.get_ref(insn.dest)}')
                 param_count += 1
             case Jump():
                 emit(f'jmp .L{ns}_{insn.label.name}')
@@ -147,6 +144,7 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
                         emit(f'movq {locals.get_ref(arg)}, {param_registers[indx]}')
                     emit(f'call {insn.fun.name}')
                     # TODO: emit proper commands when params are more than registers
+                    # TODO: make read_int work
 
                 emit(f'movq %rax, {locals.get_ref(insn.dest)}')
 
