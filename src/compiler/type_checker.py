@@ -24,7 +24,7 @@ def args_match(arg_types: list[Type], args: list[Type]) -> bool: # type: ignore[
     
     return True
 
-def type_check_function(func: FunctionSignature, arguments: list[Expression], symbol_table: SymbolTable) -> Any:
+def type_check_function(name: str, func: FunctionSignature, arguments: list[Expression], symbol_table: SymbolTable) -> Any:
     passed_args = [typecheck(arg, symbol_table) for arg in arguments]
     if args_match(func.arguments, passed_args):
         if func.return_type is Pointer:
@@ -36,7 +36,7 @@ def type_check_function(func: FunctionSignature, arguments: list[Expression], sy
 
         return func.return_type
     else:
-        raise Exception(f'Argument missmatch for function expecting arguments with types {func.arguments} got {passed_args}')
+        raise Exception(f'Argument missmatch for function {name} expecting arguments with types {func.arguments} got {passed_args}')
 
 def return_and_assign(node: Expression, type: Type) -> Type: # type: ignore[valid-type]
     node.type = type
@@ -81,7 +81,7 @@ def typecheck(node: Expression, symbol_table: SymbolTable[Type]) -> Type: # type
         case UnaryOp():
             return return_and_assign(
                 node,
-                type_check_function(symbol_table.require('unary_'+node.op), [node.right], symbol_table)
+                type_check_function('unary_'+node.op, symbol_table.require('unary_'+node.op), [node.right], symbol_table)
             )
 
         case FuncDef():
@@ -100,7 +100,7 @@ def typecheck(node: Expression, symbol_table: SymbolTable[Type]) -> Type: # type
         case FuncCall():
             return return_and_assign(
                 node, 
-                type_check_function(symbol_table.require(node.name.name), node.args, symbol_table)
+                type_check_function(node.name.name, symbol_table.require(node.name.name), node.args, symbol_table)
             )
 
         case BinaryOp():
@@ -117,7 +117,7 @@ def typecheck(node: Expression, symbol_table: SymbolTable[Type]) -> Type: # type
 
             return return_and_assign(
                 node, 
-                type_check_function(symbol_table.require(node.op), [node.left, node.right], symbol_table)
+                type_check_function(node.op,symbol_table.require(node.op), [node.left, node.right], symbol_table)
             )
 
         case IfThenElse():
