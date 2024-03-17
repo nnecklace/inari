@@ -303,7 +303,8 @@ def parse(tokens: list[Token]) -> Module:
 
         return left
 
-    root = parse_expression()
+    # all top level modules are blocks
+    root = parse_block()
 
     if tokens:
         raise Exception(f'Unparsable exception, tokens left unparsed {tokens}')
