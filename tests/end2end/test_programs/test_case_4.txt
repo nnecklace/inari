@@ -1,0 +1,24 @@
+input#var x: Int = 10; var y: Int* = &x; var z: Int = *y; z
+prints#10
+----------
+input#var x: Int = 10; var y: Int* = &x; var z: Int** = &y; **z
+prints#10
+----------
+input#var x: Int = 5; var y: Int* = &x; var z: Int = *y * *y; z
+prints#25
+----------
+input#var x: Int = 2; var y: Int = 5; var n: Int* = &x; var m: Int* = &y; *n + *m
+prints#7
+----------
+input#var x: Int = 20; var y: Int* = &x; *y = 10; *y
+prints#10
+----------
+input#var x: Int = 20; var y: Int* = &x; *y = *y + *y; *y
+prints#40
+----------
+input#fun square(p: Int): Unit { p = p * p;} var x: Int = 3; square(x); print_int(x);
+prints#3
+----------
+input#fun square(p: Int*): Unit { *p = *p * *p;} var x: Int = 3; square(&x); print_int(x);
+prints#9
+----------
