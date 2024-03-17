@@ -130,7 +130,8 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
                 if param_count < len(param_registers):
                     emit(f'movq {param_registers[param_count]}, {locals.get_ref(insn.dest)}')
                 else:
-                    emit(f'movq {stack_arg_address}(%rbp), {locals.get_ref(insn.dest)}')
+                    emit(f'movq {stack_arg_address}(%rbp), %rax')
+                    emit(f'movq %rax, {locals.get_ref(insn.dest)}')
                     stack_arg_address += 8
                 param_count += 1
             case Jump():
