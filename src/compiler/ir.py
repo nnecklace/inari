@@ -63,6 +63,10 @@ class Call(Instruction):
     dest: IRVar
 
 @dataclass(frozen=True)
+class ReturnValue(Instruction):
+    var: IRVar
+
+@dataclass(frozen=True)
 class Label(Instruction):
     """Marks the destination of a jump instruction."""
     name: str

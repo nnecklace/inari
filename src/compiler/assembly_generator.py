@@ -1,19 +1,19 @@
 from typing import Dict
-from compiler.ir import CopyPointer, Instruction, IRVar, Label, LoadBoolParam, LoadIntConst, Jump, LoadBoolConst, Copy, CondJump, Call, LoadIntParam, LoadPointerParam
+from compiler.ir import CopyPointer, Instruction, IRVar, Label, LoadBoolParam, LoadIntConst, Jump, LoadBoolConst, Copy, CondJump, Call, LoadIntParam, LoadPointerParam, ReturnValue
 from dataclasses import fields
 from compiler.intrinsics import all_intrinsics, IntrinsicArgs
 from compiler.types import get_global_symbol_table_types
 
 class Locals:
     """Knows the memory location of every local variable."""
-    _var_to_location: dict[IRVar, str]
+    _var_to_location: dict[str, str]
     _stack_used: int
 
     def __init__(self, variables: list[IRVar]) -> None:
         start_loc = -8
         self._var_to_location = {}
         for var in variables:
-            self._var_to_location[var] = str(start_loc)+'(%rbp)'
+            self._var_to_location[var.name] = str(start_loc)+'(%rbp)'
             start_loc += -8
         
         self._stack_used = -1*start_loc-8
@@ -21,7 +21,7 @@ class Locals:
     def get_ref(self, v: IRVar) -> str:
         """Returns an Assembly reference like `-24(%rbp)`
         for the memory location that stores the given variable"""
-        return self._var_to_location[v]
+        return self._var_to_location[v.name]
 
     def stack_used(self) -> int:
         """Returns the number of bytes of stack space needed for the local variables."""
@@ -167,13 +167,15 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
                     emit(f'addq ${8*len(remaining_params)}, %rsp')
 
                 emit(f'movq %rax, {locals.get_ref(insn.dest)}')
+            case ReturnValue():
+                if ns == 'main':
+                    emit(f'movq $0, %rax')
+                else:
+                    emit(f'movq {locals.get_ref(insn.var)}, %rax')
 
     emit('')
     emit(f'.L{ns}_end:')
     emit('')
-
-    if ns == 'main':
-        emit(f'movq $0, %rax')
 
     emit(f'movq %rbp, %rsp')
     emit(f'popq %rbp')

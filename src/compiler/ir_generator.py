@@ -1,6 +1,6 @@
 from typing import Dict, Self, Set
 from compiler.types import Bool, Int, Type, Unit, SymbolTable
-from compiler.ir import Call, CondJump, CopyPointer, IRVar, Instruction, LoadBoolConst, LoadIntConst, Label, Copy, Jump, LoadIntParam, LoadBoolParam, LoadPointerParam
+from compiler.ir import Call, CondJump, CopyPointer, IRVar, Instruction, LoadBoolConst, LoadIntConst, Label, Copy, Jump, LoadIntParam, LoadBoolParam, LoadPointerParam, ReturnValue
 from compiler.ast import BreakContinue, Expression, FuncDef, Literal, Identifier, BinaryOp, IfThenElse, Block, Var, While, UnaryOp, Module, FuncCall
 
 def generate_blocks(ins: Dict[str, list[Instruction]]) -> Dict[str, list[list[tuple[IRVar, int]]]]:
@@ -439,6 +439,7 @@ def generate_ir(
         ins.append(Call(root_module.location, root_symtab.require('print_bool'), [var_final_result], IRVar('x'+str(x_count))))
         var_counts['x'] = x_count
 
+    ins.append(ReturnValue(root_module.location, IRVar('-1')))
     ns_ins['main'] = ins
     for f in functions:
         ins = []
@@ -454,7 +455,8 @@ def generate_ir(
                 # argument has to be pointer
                 ins.append(LoadPointerParam(arg.location, IRVar(arg.name), param))
             new_symbol_table.add_local(arg.name, param)
-        visit(new_symbol_table, f.body)
+        return_value = visit(new_symbol_table, f.body)
+        ins.append(ReturnValue(f.location, return_value))
         ns_ins[f.name.name] = ins
 
     return ns_ins
