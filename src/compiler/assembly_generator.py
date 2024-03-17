@@ -69,7 +69,8 @@ def generate_ns_assembly(ns_ins: Dict[str, list[Instruction]]) -> str:
     for k, v in ns_ins.items():
         assembly.append(generate_assembly(k,v))
 
-    return emit_global(ns_ins.keys())+''.join(ass+'\n' for ass in assembly)
+    # python doesn't understand what dict_keys is, so I just ignore this
+    return emit_global(ns_ins.keys())+''.join(ass+'\n' for ass in assembly) # type: ignore[arg-type]
 
 def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
     lines = []

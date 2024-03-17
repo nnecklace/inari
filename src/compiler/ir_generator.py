@@ -4,13 +4,13 @@ from compiler.ir import Call, CondJump, CopyPointer, IRVar, Instruction, LoadBoo
 from compiler.ast import BreakContinue, Expression, FuncDef, Literal, Identifier, BinaryOp, IfThenElse, Block, Var, While, UnaryOp, Module, FuncCall
 
 def generate_blocks(ins: Dict[str, list[Instruction]]) -> Dict[str, list[list[tuple[IRVar, int]]]]:
-    block_dict = {}
+    block_dict: Dict[str, list[list[tuple[IRVar, int]]]] = {}
 
     unique_indx = 0
 
     for name, instructions in ins.items():
         block_dict[name] = []
-        block = []
+        block: list[tuple[Instruction, int]] = []
         for instruction in instructions:
             if isinstance(instruction, Label) and len(block) > 0:
                 block_dict[name].append(block)
@@ -26,7 +26,7 @@ def generate_blocks(ins: Dict[str, list[Instruction]]) -> Dict[str, list[list[tu
 
     return block_dict
 
-def generate_flow_graph(ns_blocks: Dict[str, list[list[IRVar]]]) -> Dict[str, Dict[str, list[Instruction | str]]]:
+def generate_flow_graph(ns_blocks: Dict[str, list[list[tuple[IRVar, int]]]]) -> Dict[str, Dict[str, list[Instruction | str]]]:
     graph = {}
 
     for name, blocks in ns_blocks.items():
@@ -97,7 +97,7 @@ class DataFlow:
     def __init__(self: Self, ins: Dict[str, list[list[tuple[Instruction, int]]]]) -> None:
         self.ins = ins
 
-    def init_change_log(self: Self, value: bool):
+    def init_change_log(self: Self, value: bool) -> None:
         for key in self.change_log_in.keys():
             self.change_log_in[key] = value
             self.change_log_out[key] = value
@@ -134,7 +134,7 @@ class DataFlow:
                                     self.change_log_in[index+1] = True
             first_round = False
 
-    def print_out_flows(self: Self):
+    def print_out_flows(self: Self) -> None:
         for steps, state in self.outp.items():
             if len([s for s in state.values() if len(s) > 0]) == 0:
                 continue
@@ -145,7 +145,7 @@ class DataFlow:
                 print(f'{var} => {sets}')
             print()
 
-    def print_in_flows(self: Self):
+    def print_in_flows(self: Self) -> None:
         for steps, state in self.inp.items():
             if len([s for s in state.values() if len(s) > 0]) == 0:
                 continue
@@ -156,7 +156,7 @@ class DataFlow:
                 print(f'{var} => {sets}')
             print()
 
-    def equal(self: Self, state_a: State, state_b: State):
+    def equal(self: Self, state_a: State, state_b: State) -> bool:
         for key, value in state_a.items():
             if value != state_b[key]:
                 return False
@@ -178,7 +178,7 @@ class DataFlow:
 
         return jumps
 
-    def merge(self: Self, jumps: list[int]):
+    def merge(self: Self, jumps: list[int]) -> State:
         merger = self.outp[jumps[0]]
         for j in jumps[1:]:
             for key, value in self.outp[j].items():
@@ -303,7 +303,7 @@ def generate_ir(
                         var_left = visit(symbol_table, expr.left.right)
                         ins.append(CopyPointer(loc, var_right, var_left))
                     else:
-                        var_left = symbol_table.require(expr.left.name)
+                        var_left = symbol_table.require(expr.left.name) # type: ignore[attr-defined]
                         ins.append(Copy(loc, var_right, var_left))
                     return var_unit
                 

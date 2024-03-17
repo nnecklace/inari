@@ -1,6 +1,7 @@
 import os
 from compiler.assembler import assemble
 from compiler.assembly_generator import generate_ns_assembly
+from compiler.ast import Module
 from compiler.ir import generate_root_var_types
 from compiler.ir_generator import generate_ir
 from compiler.parser import parse
@@ -10,12 +11,12 @@ from compiler.types import get_global_symbol_table_types
 import unittest
 import subprocess
 
-def tokenize_parse_and_typecheck(inpt):
+def tokenize_parse_and_typecheck(inpt: str) -> Module:
     parsed = parse(tokenize(inpt))
     typecheck_module(parsed, get_global_symbol_table_types())
     return parsed
 
-def run_test_case(test_count, test_namespace, test_case):
+def run_test_case(test_count: int, test_namespace: str, test_case: tuple[str, str]) -> None:
     source, expected = test_case
     assembly = generate_ns_assembly(generate_ir(generate_root_var_types(), tokenize_parse_and_typecheck(source)))
     assemble(assembly, f'{test_namespace}_{test_count}_out')
@@ -26,7 +27,7 @@ def run_test_case(test_count, test_namespace, test_case):
     else:
         raise Exception(f'End 2 End test failed on test case {test_namespace}_{test_count}')
 
-def read_test_cases():
+def read_test_cases() -> None:
     path = './tests/end2end/test_programs'
     files = [f for f in os.listdir(path)]
 
@@ -43,6 +44,6 @@ def read_test_cases():
                 run_test_case(count, f, (inpt, expected))
 
 class End2EndTest(unittest.TestCase):
-    def test_all_cases(self):
+    def test_all_cases(self) -> None:
         return None
         #read_test_cases()

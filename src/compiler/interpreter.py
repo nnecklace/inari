@@ -1,7 +1,7 @@
 from compiler.ast import Expression, Literal, IfThenElse, Module, While, BinaryOp, Var, Block, Identifier, UnaryOp, FuncCall
 from compiler.types import SymbolTable, Unit, Value
 
-def interpret_module(module: Module, root_table: SymbolTable) -> Unit:
+def interpret_module(module: Module, root_table: SymbolTable) -> Value:
     for expr in module.expressions[:len(module.expressions)-1]:
         interpret(expr, root_table)
 
@@ -13,7 +13,7 @@ def interpret(node: Expression, symbol_table: SymbolTable) -> Value:
             return node.value
 
         case FuncCall():
-            func = symbol_table.require(node.name)
+            func = symbol_table.require(node.name.name)
             interpreted_args = [interpret(arg, symbol_table) for arg in node.args]
             if node.name == 'print_int' or node.name == 'print_bool':
                 if len(interpreted_args) != 1:
@@ -33,7 +33,7 @@ def interpret(node: Expression, symbol_table: SymbolTable) -> Value:
 
         case BinaryOp():
             if node.op == '=':
-                return symbol_table.require(node.left.name, interpret(node.right, symbol_table))
+                return symbol_table.require(node.left.name, interpret(node.right, symbol_table)) # type: ignore[attr-defined]
 
             if node.op == 'and':
                 return interpret(node.left, symbol_table) and interpret(node.right, symbol_table)
@@ -55,7 +55,8 @@ def interpret(node: Expression, symbol_table: SymbolTable) -> Value:
             if interpret(node.cond, symbol_table):
                 return interpret(node.then, symbol_table)
             else:
-                return interpret(node.otherwise, symbol_table)
+                if node.otherwise:
+                    return interpret(node.otherwise, symbol_table)
 
         case While():
             last = None
@@ -73,3 +74,5 @@ def interpret(node: Expression, symbol_table: SymbolTable) -> Value:
                 interpret(expr, new_symbol_table)
 
             return interpret(node.statements[-1], new_symbol_table)
+
+    return None

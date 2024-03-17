@@ -1,6 +1,6 @@
 import sys
 from compiler.assembler import assemble
-from compiler.ast import Expression
+from compiler.ast import Module
 from compiler.ir import generate_root_var_types
 from compiler.tokenizer import tokenize
 from compiler.parser import parse
@@ -20,7 +20,7 @@ Common arguments:
     source_code_file        Optional. Defaults to standard input if missing.
  """.strip() + "\n"
 
-def tokenize_parse_and_typecheck(inpt: str) -> Expression:
+def tokenize_parse_and_typecheck(inpt: str) -> Module:
     parsed = parse(tokenize(inpt))
     typecheck_module(parsed, get_global_symbol_table_types())
     return parsed
