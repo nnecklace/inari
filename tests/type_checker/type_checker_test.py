@@ -202,6 +202,11 @@ class TypeCheckerTest(unittest.TestCase):
         expr_types = typecheck_module(expr, get_global_symbol_table_types())
         assert find(expr.expressions[-1], expr_types) == Int
 
+    def test_typecheck_function_returns_pointer(self) -> None:
+        expr = p('var x: Int = 20; var y: Int* = &x; fun f(z: Int*): Int* { z }; *f(y)')
+        expr_types = typecheck_module(expr, get_global_symbol_table_types())
+        assert find(expr.expressions[-1], expr_types) == Int
+
     def test_typecheck_custom_func_args(self) -> None:
         self.assertRaises(Exception, typecheck_module, p('fun f(x: Int*): Int { 1 + *x} f(true)'), get_global_symbol_table_types())
 

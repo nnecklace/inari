@@ -94,7 +94,7 @@ def typecheck(node: Expression, symbol_table: SymbolTable[Type]) -> Type: # type
 
             body = typecheck(node.body, new_symbol_table)
 
-            if func.return_type is not body: # type: ignore[union-attr]
+            if func.return_type is not body and func.return_type != body: # type: ignore[union-attr]
                 raise Exception(f'Function {node.name} return type must be same as given type, mismatch {func.return_type} =/= {body}') # type: ignore[union-attr]
 
             return return_and_assign(node, func)

@@ -1,0 +1,24 @@
+input#var x: Int = 10; fun f(x: Int): Int { x } x+f(2)
+prints#12
+----------
+input#fun f(): Int {100/2} fun g(x: Int): Int { 2*x } g(f())
+prints#100
+----------
+input#fun f(): Int {100/2} fun g(x: Int): Int { 2*x } g(50)+f()
+prints#150
+----------
+input#fun square(x: Int): Int { x * x } fun vec_len_squared(x: Int, y: Int): Int { square(x) + square(y) } vec_len_squared(3, 4)
+prints#25
+----------
+input#var x: Int = 1; fun f(y: Int): Int {y+1} while x < 10 do { x = f(x) }; x
+prints#10
+----------
+input#var x: Int = 20; var y: Int* = &x; fun f(z: Int*): Int* { z }; *f(y)
+prints#20
+----------
+input#var x: Bool = true; var y: Bool* = &x; if *y then {print_int(2);} else {print_int(4);}
+prints#2
+----------
+input#fun f(x: Bool*): Unit { *x = false; } var x: Bool = true; var y: Bool* = &x; f(y); if *y then print_int(2) else print_int(4)
+prints#4
+----------
