@@ -55,6 +55,9 @@ def main() -> int:
     if command == 'interpret':
         source_code = read_source_code()
         ...  # TODO(student)
+
+    elif command == 'parse':
+        parse(tokenize(read_source_code()))
     elif command == 'compile':
         source = tokenize_parse_and_typecheck(read_source_code())
         ins = generate_ir(generate_root_var_types(),source)

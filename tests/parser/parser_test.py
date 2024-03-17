@@ -1,6 +1,6 @@
 from compiler.parser import parse
 from compiler.tokenizer import tokenize
-from compiler.ast import Argument, Expression, BinaryOp, FuncDef, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, Block, Var, While, Module
+from compiler.ast import Argument, BreakContinue, Expression, BinaryOp, FuncDef, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, Block, Var, While, Module
 from compiler.types import Bool, Int, Pointer, Unit, Unknown
 
 import unittest
@@ -552,7 +552,27 @@ class ParserTest(unittest.TestCase):
             Identifier('x')
         ])
 
-    # TODO: test **p
+    def test_parse_multi_unary_dereference_op(self):
+        pointer = Pointer()
+        pointer.value = Int
+
+        pointer2 = Pointer()
+        pointer2.value = Pointer()
+        pointer2.value.value = Int
+        assert parse(tokenize('var x: Int = 1; var y: Int* = &x; var z: Int** = &y; var n: Int = **z')) == module([
+            Var(Identifier('x'), Literal(1), Int),
+            Var(Identifier('y'), UnaryOp('&', Identifier('x')), pointer),
+            Var(Identifier('z'), UnaryOp('&', Identifier('y')), pointer2),
+            Var(Identifier('n'), UnaryOp('*', UnaryOp('*', Identifier('z'))), Int)
+        ])
+
+
+    def test_parse_break_and_continue(self):
+        assert parse(tokenize('while true do { if true then break else continue }')) == module(
+            While(Literal(True), Block([
+                IfThenElse(Literal(True), BreakContinue('break'), BreakContinue('continue'))
+            ]))
+        )
 
     def test_parse_erroneous_block(self):
         self.assertRaises(Exception, parse, tokenize('{ a b }'))
@@ -583,3 +603,18 @@ class ParserTest(unittest.TestCase):
 
     def test_parse_erroneous_func_call_2(self):
         self.assertRaises(Exception, parse, tokenize('f(x,y'))
+
+    def test_parse_erroneous_func_call_3(self):
+        self.assertRaises(Exception, parse, tokenize('f(x, var y: Int = 2;)'))
+
+    def test_parse_erroneous_unary_op(self):
+        self.assertRaises(Exception, parse, tokenize('&2'))
+
+    def test_parse_erroneuos_func_def(self):
+        self.assertRaises(Exception, parse, tokenize('fun 1(x: Int, y: Int): Unit {}'))
+
+    def test_parse_erroneuos_func_def2(self):
+        self.assertRaises(Exception, parse, tokenize('fun f(1: Int, y: Int): Unit {}'))
+
+    def test_parse_erroneuos_var_type_declaration(self):
+        self.assertRaises(Exception, parse, tokenize('var x: 1 = 23'))

@@ -1,4 +1,3 @@
-from compiler import types
 from compiler.location import Location
 from compiler.tokenizer import Token
 from compiler.ast import Argument, Expression, BinaryOp, FuncDef, Literal, Identifier, IfThenElse, FuncCall, UnaryOp, While, Var, Block, BreakContinue, Module
@@ -120,7 +119,7 @@ def parse(tokens: list[Token]) -> Module:
             following.text != '}' and \
             not includes_end_block(initialization) and \
             not isinstance(initialization, Block):
-            raise Exception(f'Expected ; after var declaration instead found {following.text}')
+            raise Exception(f'Expected ; after var declaration {identifier} instead found {following.text}')
 
         return Var(
             name=identifier,
@@ -168,43 +167,49 @@ def parse(tokens: list[Token]) -> Module:
     def parse_factor() -> Expression:
         text = peek().text
         token_type = peek().type
-        if text == '(':
-            return parse_parenthesized()
-        elif text == '{':
-            return parse_block()
-        elif token_type == 'int_literal':
-            return parse_int_literal()
-        elif token_type == 'bool_literal':
-            return parse_bool_literal()
-        elif token_type == 'identifier':
-            if text == 'fun':
-                return parse_function_definition()
-            elif text == 'if':
-                return parse_if_then_else()
-            elif text == 'while':
-                return parse_while()
-            elif text == 'var':
-                return parse_var()
-            elif text  == 'not':
-                return parse_unary_op()
-            elif text == 'break' or text == 'continue':
-                return parse_break_continue()
-            else:
-                identifier = parse_identifier()
-                if peek().text == '(':
-                    return parse_function_call(identifier)
-                
-                return identifier
-        elif token_type == 'operator' and (text == '-' or text == '&' or text == '*'):
-            operator = parse_unary_op()
 
-            # we do it as it is done in C
-            if (text == '&' or text == '*') and not isinstance(operator.right, Identifier):
-                raise Exception(f'Operator & and * must be followed by an Identifier')
+        match token_type:
+            case 'int_literal':
+                return parse_int_literal()
+            case 'bool_literal':
+                return parse_bool_literal()
+            case 'identifier':
+                if text == 'fun':
+                    return parse_function_definition()
+                elif text == 'if':
+                    return parse_if_then_else()
+                elif text == 'while':
+                    return parse_while()
+                elif text == 'var':
+                    return parse_var()
+                elif text  == 'not':
+                    return parse_unary_op()
+                elif text == 'break' or text == 'continue':
+                    return parse_break_continue()
+                else:
+                    identifier = parse_identifier()
+                    if peek().text == '(':
+                        return parse_function_call(identifier)
+                    return identifier
+            case 'module':
+                return parse_block()
+            case 'punctuation':
+                if text == '{':
+                    return parse_block()
+                if text == '(':
+                    return parse_parenthesized()
+            case 'operator':
+                if text != '-' and text != '&' and text != '*':
+                    raise Exception(f'Operator {text} is not a unary operator')
 
-            return operator
-        else:
-            raise Exception(f'{peek().location}: expected an integer literal or an identifier')
+                operator = parse_unary_op()
+                # we do it as it is done in C, might be that I'm mistaken, but this is what I found from a context free grammar manual for C from 2005
+                if text == '&' and not isinstance(operator.right, Identifier):
+                    raise Exception(f'Operator & must be followed by an Identifier')
+
+                return operator
+
+        raise Exception(f'{peek().location}: Unexpected token {token_type}: {text}')
 
     def parse_parenthesized() -> Expression:
         pop_next('(')
@@ -223,8 +228,6 @@ def parse(tokens: list[Token]) -> Module:
         arguments = []
         pop_next('(')
         while peek().text != ')':
-            if peek().type == 'end':
-                raise Exception(f'{peek().location}: expected )')
             next_arg = parse_factor()
             declared_type = None
 
@@ -241,7 +244,7 @@ def parse(tokens: list[Token]) -> Module:
 
         declared_type = None
         if peek().text == ':':
-            declared_type = parse_declared_type(f'Function return type must be an identifier')
+            declared_type = parse_declared_type(f'Function {func_name} return type must be an identifier')
 
         body = parse_block()
 
@@ -251,12 +254,10 @@ def parse(tokens: list[Token]) -> Module:
         args = []
         pop_next('(')
         while peek().text != ')':
-            if peek().type == 'end':
-                raise Exception(f'{peek().location}: expected )')
             args.append(parse_expression())
 
             if isinstance(args[-1], Var):
-                raise Exception('Var is only allowed directly inside blocks {} and in top-level expressions')
+                raise Exception(f'Funciton {identifier} Var is only allowed directly inside blocks and in top-level expressions')
 
             if peek().text == ',':
                 pop_next()
