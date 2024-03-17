@@ -333,7 +333,7 @@ def generate_ir(
                     return var_result
 
                 if expr.op == '==' or expr.op == '!=':
-                    var_op = expr.op
+                    var_op = IRVar(expr.op)
                 else:
                     var_op = symbol_table.require(expr.op)
 

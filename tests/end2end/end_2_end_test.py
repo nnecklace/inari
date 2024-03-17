@@ -18,14 +18,17 @@ def tokenize_parse_and_typecheck(inpt: str) -> Module:
 
 def run_test_case(test_count: int, test_namespace: str, test_case: tuple[str, str]) -> None:
     source, expected = test_case
-    assembly = generate_ns_assembly(generate_ir(generate_root_var_types(), tokenize_parse_and_typecheck(source)))
-    assemble(assembly, f'{test_namespace}_{test_count}_out')
-    proc = subprocess.run([f'{os.getcwd()}/{test_namespace}_{test_count}_out'], capture_output = True, text = True)
-    output = proc.stdout
-    if output:
-        assert output.strip() == expected
-    else:
-        raise Exception(f'End 2 End test failed on test case {test_namespace}_{test_count}')
+    try:
+        assembly = generate_ns_assembly(generate_ir(generate_root_var_types(), tokenize_parse_and_typecheck(source)))
+        assemble(assembly, f'{test_namespace}_{test_count}_out')
+        proc = subprocess.run([f'{os.getcwd()}/{test_namespace}_{test_count}_out'], capture_output = True, text = True)
+        output = proc.stdout
+        if output:
+            assert output.strip() == expected
+        else:
+            raise Exception(f'End 2 End test failed on test case {test_namespace}_{test_count}')
+    except Exception:
+        raise Exception(f'Compiler failed at test {test_namespace}_{test_count}')
 
 def read_test_cases() -> None:
     path = './tests/end2end/test_programs'
