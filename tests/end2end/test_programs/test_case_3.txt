@@ -1,0 +1,24 @@
+input#fun f(): Unit {print_int(70);} f();
+prints#70
+----------
+input#fun f(x: Int, y: Int): Int {x+y} var z = f(2,3); z
+prints#5
+----------
+input#fun f(x: Int, y: Int): Unit { if x > y then print_int(500) else print_int(200) } f(10, 20)
+prints#200
+----------
+input#fun g(x: Int): Int { if x < 10 then g(x+1) else x } var x = g(5); print_int(x)
+prints#10
+----------
+input#var x: Int = 10; fun h(y: Int): Int { x+y }; var z: Int = h(25); z
+prints#35
+----------
+input#var x: Int = 10; fun h(y: Int): Int { g()+y }; fun g(): Int { x } var z: Int = h(25); z
+prints#35
+----------
+input#fun f(x: Int, y: Int, z: Bool): Int { if z then x else y} f(1,2,false)
+prints#2
+----------
+input#fun f(x: Int, y: Int, z: Int, n: Int, m: Int, h: Int, g: Int, p: Int) { p } f(0,0,0,0,0,0,0,10)
+prints#10
+----------
