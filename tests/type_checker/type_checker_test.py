@@ -231,3 +231,6 @@ class TypeCheckerTest(unittest.TestCase):
 
     def test_typecheck_simple_binary_op_error(self) -> None:
         self.assertRaises(Exception, typecheck_module, p('2+true'), get_global_symbol_table_types())
+
+    def test_typecheck_fails_no_symbol_found(self) -> None:
+        self.assertRaises(Exception, typecheck_module, p('2+True'), get_global_symbol_table_types())
