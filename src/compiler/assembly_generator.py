@@ -13,9 +13,8 @@ class Locals:
         start_loc = -8
         self._var_to_location = {}
         for var in variables:
-            if var.name not in self._var_to_location:
-                self._var_to_location[var.name] = str(start_loc)+'(%rbp)'
-                start_loc += -8
+            self._var_to_location[var.name] = str(start_loc)+'(%rbp)'
+            start_loc += -8
         
         self._stack_used = -1*start_loc-8
 
@@ -67,123 +66,119 @@ def emit_global(ns: list[str]) -> str:
 
 def generate_ns_assembly(ns_ins: Dict[str, list[Instruction]]) -> str:
     assembly = []
-    vars = []
-    for k, v in ns_ins.items():
-        vars += get_all_ir_variables(v)
-
-    locals = Locals(
-        variables=vars
-    )
-
-    def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
-        lines = []
-        param_registers = ['%rdi', '%rsi', '%rdx', '%rcx', '%r8', '%r9']
-        param_count = 0
-        stack_arg_address = 16
-        def emit(line: str) -> None: lines.append(line)
-
-        emit(f'{ns}:')
-        emit(f'pushq %rbp')
-        emit(f'movq %rsp, %rbp')
-        emit(f'subq ${locals._stack_used}, %rsp')
-        emit('')
-        emit(f'.L{ns}_start:')
-        emit('')
-
-        for insn in instructions:
-            emit('# ' + str(insn))
-            match insn:
-                case Label():
-                    emit("")
-                    # ".L" prefix marks the symbol as "private".
-                    # This makes GDB backtraces look nicer too:
-                    # https://stackoverflow.com/a/26065570/965979
-                    emit(f'.L{ns}_{insn.name}:')
-                case LoadBoolConst():
-                    v = 0
-                    if insn.value == True:
-                        v += 1                    
-
-                    emit(f'movq ${v}, {locals.get_ref(insn.dest)}')
-                case Copy():
-                    emit(f'movq {locals.get_ref(insn.source)}, %rax')
-                    emit(f'movq %rax, {locals.get_ref(insn.dest)}')
-                case CopyPointer():
-                    emit(f'movq {locals.get_ref(insn.source)}, %rax')
-                    emit(f'movq {locals.get_ref(insn.dest)}, %rbx')
-                    emit(f'movq %rax, (%rbx)')
-                case LoadIntConst():
-                    if -2**31 <= insn.value < 2**31:
-                        emit(f'movq ${insn.value}, {locals.get_ref(insn.dest)}')
-                    else:
-                        # Due to a quirk of x86-64, we must use
-                        # a different instruction for large integers.
-                        # It can only write to a register,
-                        # not a memory location, so we use %rax
-                        # as a temporary.
-                        emit(f'movabsq ${insn.value}, %rax')
-                        emit(f'movq %rax, {locals.get_ref(insn.dest)}')
-                case LoadIntParam() | LoadBoolParam() | LoadPointerParam():
-                    if param_count < len(param_registers):
-                        emit(f'movq {param_registers[param_count]}, {locals.get_ref(insn.dest)}')
-                    else:
-                        emit(f'movq {stack_arg_address}(%rbp), {locals.get_ref(insn.dest)}')
-                        stack_arg_address += 8
-                    param_count += 1
-                case Jump():
-                    emit(f'jmp .L{ns}_{insn.label.name}')
-                case CondJump():
-                    emit(f'cmpq $0, {locals.get_ref(insn.cond)}')
-                    emit(f'jne .L{ns}_{insn.then_label.name}')
-                    emit(f'jmp .L{ns}_{insn.else_label.name}')
-                case Call():
-                    if insn.fun.name in all_intrinsics:
-                        all_intrinsics[insn.fun.name](IntrinsicArgs(
-                            arg_refs=[locals.get_ref(arg) for arg in insn.args],
-                            result_register='%rax',
-                            emit=emit
-                        ))
-                    elif insn.fun.name == 'print_int' or insn.fun.name == 'print_bool':
-                        emit(f'movq {locals.get_ref(insn.args[0])}, %rdi')
-                        emit(f'callq {insn.fun.name}')
-                    elif insn.fun.name == 'read_int':
-                        emit(f'callq {insn.fun.name}')
-                    else:
-                        remaining_params = []
-                        if len(insn.args) > len(param_registers):
-                            remaining_params = insn.args[len(param_registers):]
-
-                        for indx, arg in enumerate(insn.args[:len(param_registers)]):
-                            emit(f'movq {locals.get_ref(arg)}, {param_registers[indx]}')
-
-                        if remaining_params:
-                            for param in remaining_params:
-                                emit(f'pushq {locals.get_ref(param)}')
-
-                        emit(f'call {insn.fun.name}')
-                        if remaining_params:
-                            emit(f'addq ${8*len(remaining_params)}, %rsp')
-
-                    emit(f'movq %rax, {locals.get_ref(insn.dest)}')
-                case ReturnValue():
-                    if ns == 'main':
-                        emit(f'movq $0, %rax')
-                    else:
-                        emit(f'movq {locals.get_ref(insn.var)}, %rax')
-
-        emit('')
-        emit(f'.L{ns}_end:')
-        emit('')
-
-        emit(f'movq %rbp, %rsp')
-        emit(f'popq %rbp')
-        emit(f'ret')
-
-        return ''.join(line+'\n' for line in lines)
-
-
     for k, v in ns_ins.items():
         assembly.append(generate_assembly(k,v))
 
     # python doesn't understand what dict_keys is, so I just ignore this
     return emit_global(ns_ins.keys())+''.join(ass+'\n' for ass in assembly) # type: ignore[arg-type]
+
+def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
+    lines = []
+    param_registers = ['%rdi', '%rsi', '%rdx', '%rcx', '%r8', '%r9']
+    param_count = 0
+    stack_arg_address = 16
+    def emit(line: str) -> None: lines.append(line)
+
+    vars = get_all_ir_variables(instructions)
+
+    locals = Locals(
+        variables=vars
+    )
+
+    emit(f'{ns}:')
+    emit(f'pushq %rbp')
+    emit(f'movq %rsp, %rbp')
+    emit(f'subq ${locals._stack_used}, %rsp')
+    emit('')
+    emit(f'.L{ns}_start:')
+    emit('')
+
+    for insn in instructions:
+        emit('# ' + str(insn))
+        match insn:
+            case Label():
+                emit("")
+                # ".L" prefix marks the symbol as "private".
+                # This makes GDB backtraces look nicer too:
+                # https://stackoverflow.com/a/26065570/965979
+                emit(f'.L{ns}_{insn.name}:')
+            case LoadBoolConst():
+                v = 0
+                if insn.value == True:
+                    v += 1                    
+
+                emit(f'movq ${v}, {locals.get_ref(insn.dest)}')
+            case Copy():
+                emit(f'movq {locals.get_ref(insn.source)}, %rax')
+                emit(f'movq %rax, {locals.get_ref(insn.dest)}')
+            case CopyPointer():
+                emit(f'movq {locals.get_ref(insn.source)}, %rax')
+                emit(f'movq {locals.get_ref(insn.dest)}, %rbx')
+                emit(f'movq %rax, (%rbx)')
+            case LoadIntConst():
+                if -2**31 <= insn.value < 2**31:
+                    emit(f'movq ${insn.value}, {locals.get_ref(insn.dest)}')
+                else:
+                    # Due to a quirk of x86-64, we must use
+                    # a different instruction for large integers.
+                    # It can only write to a register,
+                    # not a memory location, so we use %rax
+                    # as a temporary.
+                    emit(f'movabsq ${insn.value}, %rax')
+                    emit(f'movq %rax, {locals.get_ref(insn.dest)}')
+            case LoadIntParam() | LoadBoolParam() | LoadPointerParam():
+                if param_count < len(param_registers):
+                    emit(f'movq {param_registers[param_count]}, {locals.get_ref(insn.dest)}')
+                else:
+                    emit(f'movq {stack_arg_address}(%rbp), {locals.get_ref(insn.dest)}')
+                    stack_arg_address += 8
+                param_count += 1
+            case Jump():
+                emit(f'jmp .L{ns}_{insn.label.name}')
+            case CondJump():
+                emit(f'cmpq $0, {locals.get_ref(insn.cond)}')
+                emit(f'jne .L{ns}_{insn.then_label.name}')
+                emit(f'jmp .L{ns}_{insn.else_label.name}')
+            case Call():
+                if insn.fun.name in all_intrinsics:
+                    all_intrinsics[insn.fun.name](IntrinsicArgs(
+                        arg_refs=[locals.get_ref(arg) for arg in insn.args],
+                        result_register='%rax',
+                        emit=emit
+                    ))
+                elif insn.fun.name == 'print_int' or insn.fun.name == 'print_bool':
+                    emit(f'movq {locals.get_ref(insn.args[0])}, %rdi')
+                    emit(f'callq {insn.fun.name}')
+                elif insn.fun.name == 'read_int':
+                    emit(f'callq {insn.fun.name}')
+                else:
+                    remaining_params = []
+                    if len(insn.args) > len(param_registers):
+                        remaining_params = insn.args[len(param_registers):]
+
+                    for indx, arg in enumerate(insn.args[:len(param_registers)]):
+                        emit(f'movq {locals.get_ref(arg)}, {param_registers[indx]}')
+
+                    if remaining_params:
+                        for param in remaining_params:
+                            emit(f'pushq {locals.get_ref(param)}')
+
+                    emit(f'call {insn.fun.name}')
+                    emit(f'addq ${8*len(remaining_params)}, %rsp')
+
+                emit(f'movq %rax, {locals.get_ref(insn.dest)}')
+            case ReturnValue():
+                if ns == 'main':
+                    emit(f'movq $0, %rax')
+                else:
+                    emit(f'movq {locals.get_ref(insn.var)}, %rax')
+
+    emit('')
+    emit(f'.L{ns}_end:')
+    emit('')
+
+    emit(f'movq %rbp, %rsp')
+    emit(f'popq %rbp')
+    emit(f'ret')
+
+    return ''.join(line+'\n' for line in lines)
