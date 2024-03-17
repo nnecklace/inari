@@ -1,6 +1,6 @@
 from typing import Dict, Self, Set
 from compiler.types import Bool, Int, Type, Unit, SymbolTable
-from compiler.ir import Call, CondJump, IRVar, Instruction, LoadBoolConst, LoadIntConst, Label, Copy, Jump, LoadIntParam, LoadBoolParam, LoadPointerParam
+from compiler.ir import Call, CondJump, CopyPointer, IRVar, Instruction, LoadBoolConst, LoadIntConst, Label, Copy, Jump, LoadIntParam, LoadBoolParam, LoadPointerParam
 from compiler.ast import BreakContinue, Expression, FuncDef, Literal, Identifier, BinaryOp, IfThenElse, Block, Var, While, UnaryOp, Module, FuncCall
 
 def generate_blocks(ins: Dict[str, list[Instruction]]) -> Dict[str, list[list[tuple[IRVar, int]]]]:
@@ -278,7 +278,6 @@ def generate_ir(
 
             case FuncCall():
                 args = [visit(symbol_table, arg) for arg in expr.args]
-
                 var_result = new_var(expr.type)
                 ins.append(Call(loc, symbol_table.require(expr.name.name), args, var_result))
                 return var_result
@@ -297,11 +296,15 @@ def generate_ir(
             
             case BinaryOp():
                 if expr.op == '=':
-                    if not isinstance(expr.left, Identifier):
+                    if not isinstance(expr.left, Identifier) and (isinstance(expr.left, UnaryOp) and expr.left.op != '*'):
                         raise Exception(f'Expected left hand side of assignment in {expr.location} to be an identifier')
                     var_right = visit(symbol_table, expr.right)
-                    var_left = symbol_table.require(expr.left.name)
-                    ins.append(Copy(loc, var_right, var_left))
+                    if isinstance(expr.left, UnaryOp):
+                        var_left = visit(symbol_table, expr.left)
+                        #ins.append(CopyPointer(loc, var_right, var_left))
+                    else:
+                        var_left = symbol_table.require(expr.left.name)
+                        ins.append(Copy(loc, var_right, var_left))
                     return var_unit
                 
                 if expr.op == 'and' or expr.op == 'or':

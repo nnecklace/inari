@@ -50,6 +50,12 @@ class Copy(Instruction):
     dest: IRVar
 
 @dataclass(frozen=True)
+class CopyPointer(Instruction):
+    """Copies a memory address from one variable to another."""
+    source: IRVar
+    dest: IRVar
+
+@dataclass(frozen=True)
 class Call(Instruction):
     """Calls a function or built-in."""
     fun: IRVar
