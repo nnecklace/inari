@@ -110,8 +110,9 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
                 emit(f'movq {locals.get_ref(insn.source)}, %rax')
                 emit(f'movq %rax, {locals.get_ref(insn.dest)}')
             case CopyPointer():
-                emit(f'movq {locals.get_ref(insn.source)}, (%rax)')
-                emit(f'movq %rax, {locals.get_ref(insn.dest)}')
+                emit(f'movq {locals.get_ref(insn.source)}, %rax')
+                emit(f'movq {locals.get_ref(insn.dest)}, %rbx')
+                emit(f'movq %rax, (%rbx)')
             case LoadIntConst():
                 if -2**31 <= insn.value < 2**31:
                     emit(f'movq ${insn.value}, {locals.get_ref(insn.dest)}')

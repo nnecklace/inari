@@ -300,7 +300,7 @@ def generate_ir(
                         raise Exception(f'Expected left hand side of assignment in {expr.location} to be an identifier')
                     var_right = visit(symbol_table, expr.right)
                     if isinstance(expr.left, UnaryOp):
-                        var_left = visit(symbol_table, expr.left)
+                        var_left = visit(symbol_table, expr.left.right)
                         ins.append(CopyPointer(loc, var_right, var_left))
                     else:
                         var_left = symbol_table.require(expr.left.name)
