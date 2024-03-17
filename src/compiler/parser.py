@@ -111,6 +111,8 @@ def parse(tokens: list[Token]) -> Module:
         if peek().text == '=':
             pop_next('=')
             initialization = parse_expression()
+        else:
+            raise Exception(f'Expected initialization for variable {identifier.name}, non given')
 
         following = peek()
 
@@ -119,7 +121,7 @@ def parse(tokens: list[Token]) -> Module:
             following.text != '}' and \
             not includes_end_block(initialization) and \
             not isinstance(initialization, Block):
-            raise Exception(f'Expected ; after var declaration {identifier} instead found {following.text}')
+            raise Exception(f'Expected ; after var declaration {identifier.name} instead found {following.text}')
 
         return Var(
             name=identifier,

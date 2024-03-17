@@ -552,6 +552,9 @@ class ParserTest(unittest.TestCase):
             Identifier('x')
         ])
 
+    def test_parse_multi_unary_operators2(self) -> None:
+        assert parse(tokenize('not not false')) == module(UnaryOp('not', UnaryOp('not', Literal(False))))
+
     def test_parse_multi_unary_dereference_op(self) -> None:
         pointer = Pointer()
         pointer.value = Int
@@ -594,6 +597,9 @@ class ParserTest(unittest.TestCase):
 
     def test_parse_erroneous_var(self) -> None:
         self.assertRaises(Exception, parse, tokenize('var 1 = 2'))
+
+    def test_parse_erroneous_var2(self) -> None:
+        self.assertRaises(Exception, parse, tokenize('var x: Unit;'))
 
     def test_parse_erroneous_vars(self) -> None:
         self.assertRaises(Exception, parse, tokenize('var a = b var g = 1'))

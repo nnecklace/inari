@@ -1,7 +1,7 @@
 from inspect import isclass
 from compiler.ast import BreakContinue, Expression, BinaryOp, FuncDef, Literal, Identifier, UnaryOp, Var, Block, While, IfThenElse, FuncCall, Module
-from compiler.types import FunctionSignature, Int, Pointer, PrimitiveType, Type, Bool, Unit, SymbolTable, Value
-from typing import Any, get_args
+from compiler.types import FunctionSignature, Int, Pointer, Type, Bool, Unit, SymbolTable, Value
+from typing import Any
 
 def get_type(value: Value) -> Type: # type: ignore[valid-type]
     if value is int:
@@ -40,7 +40,7 @@ def type_check_function(name: str, func: FunctionSignature, arguments: list[Expr
         if func.return_type is Type and name == 'unary_*':
             # this is again a hack for pointers
             return_arg = passed_args[0]
-            return return_arg.value
+            return return_arg.value # type: ignore[union-attr]
 
         return func.return_type
     else:
@@ -68,13 +68,6 @@ def typecheck_module(module: Module, root_table: SymbolTable[Type]) -> list[tupl
 
     return expr_types
 
-def var_in_args(var_type: Type, expected_types: tuple[Any]) -> bool:
-    for t in expected_types:
-        if var_type is t or type(var_type) is t:
-            return True
-
-    return False
-
 def typecheck(node: Expression, symbol_table: SymbolTable[Type]) -> Type: # type: ignore[valid-type]
     match node:
         case Literal():
@@ -89,7 +82,8 @@ def typecheck(node: Expression, symbol_table: SymbolTable[Type]) -> Type: # type
         case UnaryOp():
             return return_and_assign(
                 node,
-                type_check_function('unary_'+node.op, symbol_table.require('unary_'+node.op), [node.right], symbol_table)
+                type_check_function('unary_'+node.op, symbol_table.require('unary_'+node.op), [node.right], symbol_table) # type: ignore[arg-type] 
+                # these ignore comments are just here because python doesn't have a good enough type system
             )
 
         case FuncDef():
@@ -100,15 +94,15 @@ def typecheck(node: Expression, symbol_table: SymbolTable[Type]) -> Type: # type
 
             body = typecheck(node.body, new_symbol_table)
 
-            if func.return_type is not body:
-                raise Exception(f'Function {node.name} return type must be same as given type, mismatch {func.return_type} =/= {body}')
+            if func.return_type is not body: # type: ignore[union-attr]
+                raise Exception(f'Function {node.name} return type must be same as given type, mismatch {func.return_type} =/= {body}') # type: ignore[union-attr]
 
             return return_and_assign(node, func)
 
         case FuncCall():
             return return_and_assign(
                 node, 
-                type_check_function(node.name.name, symbol_table.require(node.name.name), node.args, symbol_table)
+                type_check_function(node.name.name, symbol_table.require(node.name.name), node.args, symbol_table) # type: ignore[arg-type]
             )
 
         case BinaryOp():
@@ -125,7 +119,7 @@ def typecheck(node: Expression, symbol_table: SymbolTable[Type]) -> Type: # type
 
             return return_and_assign(
                 node, 
-                type_check_function(node.op,symbol_table.require(node.op), [node.left, node.right], symbol_table)
+                type_check_function(node.op,symbol_table.require(node.op), [node.left, node.right], symbol_table) # type: ignore[arg-type]
             )
 
         case IfThenElse():
@@ -147,20 +141,19 @@ def typecheck(node: Expression, symbol_table: SymbolTable[Type]) -> Type: # type
             if cond is not Bool:
                 raise Exception(f'While condition should be bool {cond} given')
             
-            return return_and_assign(node, typecheck(node.body, symbol_table))
+            typecheck(node.body, symbol_table)
+
+            return return_and_assign(node, Unit)
 
         case Var():
             # TODO: Clean this up
             variable_type = node.declared_type
             initialization_type = typecheck(node.initialization, symbol_table)
-            if (initialization_type is Type and not var_in_args(variable_type, get_args(initialization_type))) or\
-               (initialization_type is not Type and variable_type != None and ((variable_type is not initialization_type) and (variable_type != initialization_type))):
-                    raise Exception(f'Variable {node.name.name} declared type {variable_type} does not match with initialization {initialization_type}')
+
+            if variable_type != None and ((variable_type is not initialization_type) and (variable_type != initialization_type)):
+                raise Exception(f'Variable {node.name.name} declared type {variable_type} does not match with initialization {initialization_type}')
             
-            if (initialization_type is Type and var_in_args(variable_type, get_args(initialization_type))):
-               symbol_table.add_local(node.name.name, variable_type)
-            else:
-               symbol_table.add_local(node.name.name, initialization_type)
+            symbol_table.add_local(node.name.name, initialization_type)
 
             return return_and_assign(node, initialization_type)
         

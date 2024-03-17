@@ -1,4 +1,4 @@
-from typing import Any, Dict, Callable, Generic, TypeVar, Union
+from typing import Any, Dict, Callable, Generic, TypeVar, Union, Optional
 from typing_extensions import Self
 
 type Int = int # type: ignore[valid-type]
@@ -21,13 +21,13 @@ class Pointer:
         t_levels = 0
         while type(t) != type(PrimitiveType):
             t_levels += 1
-            t = t.value
+            t = t.value # type: ignore[assignment]
 
         o = other
         o_levels = 0
         while type(o) != type(PrimitiveType):
             o_levels += 1
-            o = o.value
+            o = o.value # type: ignore[assignment]
 
         return o_levels == t_levels and o is t
 
@@ -61,14 +61,16 @@ def get_type_from_str(type: str) -> Type: # type: ignore[valid-type]
     pointers = type.count('*')
     type = type.split('*')[0]
 
+    # python doesn't like when variables change type, but hey it allows it so I use it :)
+
     if type == 'Int':
-        type = Int
+        type = Int # type: ignore[assignment]
     elif type == 'Bool':
-        type = Bool
+        type = Bool # type: ignore[assignment]
     elif type == 'Unit':
-        type = Unit
+        type = Unit # type: ignore[assignment]
     else:
-        type = Unknown
+        type = Unknown # type: ignore[assignment]
 
     if pointers  == 0 or type is Unknown:
         return type 
@@ -82,8 +84,8 @@ def get_type_from_str(type: str) -> Type: # type: ignore[valid-type]
 
 class SymbolTable(Generic[T]):
     bindings: Dict[str, T]
-    parent: 'SymbolTable[T]'
-    def __init__(self: Self, bindings: Dict[str, T], parent: 'SymbolTable[T]') -> None:
+    parent: Optional['SymbolTable[T]']
+    def __init__(self: Self, bindings: Dict[str, T], parent: Optional['SymbolTable[T]']) -> None:
         self.bindings = bindings
         self.parent = parent
 
@@ -95,32 +97,32 @@ class SymbolTable(Generic[T]):
         while current:
             if name in current.bindings:
                 if new_value:
-                    current.bindings[name] = new_value
+                    current.bindings[name] = new_value # type: ignore[assignment]
                 return current.bindings[name]
             else:
-                current = current.parent
+                current = current.parent # type: ignore[assignment]
         
         raise Exception(f'No symbol {name} found')
 
 def get_global_symbol_table_types() -> SymbolTable[Type]:
     return SymbolTable[Type](bindings={ # type: ignore[valid-type]
-        'unary_-': FunctionSignature([Int], Int),
-        'unary_not':FunctionSignature([Bool], Bool),
-        'unary_*': FunctionSignature([Pointer], Type),
-        'unary_&': FunctionSignature([Type], Pointer),
-        '+': FunctionSignature([Int,Int], Int),
-        '-': FunctionSignature([Int,Int], Int),
-        '*': FunctionSignature([Int,Int], Int),
-        '/': FunctionSignature([Int,Int], Int),
-        '%': FunctionSignature([Int,Int], Int),
-        '<': FunctionSignature([Int,Int], Bool),
-        '>': FunctionSignature([Int,Int], Bool),
-        '<=': FunctionSignature([Int,Int], Bool),
-        '>=': FunctionSignature([Int,Int], Bool),
-        'and': FunctionSignature([Bool,Bool], Bool),
-        'or': FunctionSignature([Bool,Bool], Bool),
-        'print_int': FunctionSignature([Int], Unit),
-        'print_bool': FunctionSignature([Bool], Unit),
+        'unary_-': FunctionSignature([Int], Int), # type: ignore[list-item]
+        'unary_not':FunctionSignature([Bool], Bool), # type: ignore[list-item]
+        'unary_*': FunctionSignature([Pointer], Type), # type: ignore[list-item]
+        'unary_&': FunctionSignature([Type], Pointer), # type: ignore[list-item]
+        '+': FunctionSignature([Int,Int], Int), # type: ignore[list-item]
+        '-': FunctionSignature([Int,Int], Int), # type: ignore[list-item]
+        '*': FunctionSignature([Int,Int], Int), # type: ignore[list-item]
+        '/': FunctionSignature([Int,Int], Int), # type: ignore[list-item]
+        '%': FunctionSignature([Int,Int], Int), # type: ignore[list-item]
+        '<': FunctionSignature([Int,Int], Bool), # type: ignore[list-item]
+        '>': FunctionSignature([Int,Int], Bool), # type: ignore[list-item]
+        '<=': FunctionSignature([Int,Int], Bool), # type: ignore[list-item]
+        '>=': FunctionSignature([Int,Int], Bool), # type: ignore[list-item]
+        'and': FunctionSignature([Bool,Bool], Bool), # type: ignore[list-item]
+        'or': FunctionSignature([Bool,Bool], Bool), # type: ignore[list-item]
+        'print_int': FunctionSignature([Int], Unit), # type: ignore[list-item]
+        'print_bool': FunctionSignature([Bool], Unit), # type: ignore[list-item]
         'read_int': FunctionSignature([], Int)},
         parent=None)
 
