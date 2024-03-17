@@ -332,7 +332,11 @@ def generate_ir(
 
                     return var_result
 
-                var_op = symbol_table.require(expr.op)
+                if expr.op == '==' or expr.op == '!=':
+                    var_op = expr.op
+                else:
+                    var_op = symbol_table.require(expr.op)
+
                 var_left = visit(symbol_table, expr.left)
                 var_right = visit(symbol_table, expr.right)
                 var_result = new_var(expr.type)
