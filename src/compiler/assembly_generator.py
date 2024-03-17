@@ -75,6 +75,7 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
     lines = []
     param_registers = ['%rdi', '%rsi', '%rdx', '%rcx', '%r8', '%r9']
     param_count = 0
+    stack_arg_address = 16
     def emit(line: str) -> None: lines.append(line)
 
     vars = get_all_ir_variables(instructions)
@@ -125,7 +126,11 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
                     emit(f'movabsq ${insn.value}, %rax')
                     emit(f'movq %rax, {locals.get_ref(insn.dest)}')
             case LoadIntParam() | LoadBoolParam() | LoadPointerParam():
-                emit(f'movq {param_registers[param_count]}, {locals.get_ref(insn.dest)}')
+                if param_count < len(param_registers):
+                    emit(f'movq {param_registers[param_count]}, {locals.get_ref(insn.dest)}')
+                else:
+                    emit(f'movq {stack_arg_address}(%rbp), {locals.get_ref(insn.dest)}')
+                    stack_arg_address += 8
                 param_count += 1
             case Jump():
                 emit(f'jmp .L{ns}_{insn.label.name}')
@@ -143,12 +148,22 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
                 elif insn.fun.name == 'print_int' or insn.fun.name == 'print_bool':
                     emit(f'movq {locals.get_ref(insn.args[0])}, %rdi')
                     emit(f'callq {insn.fun.name}')
+                elif insn.fun.name == 'read_int':
+                    emit(f'callq {insn.fun.name}')
                 else:
-                    for indx, arg in enumerate(insn.args):
+                    remaining_params = []
+                    if len(insn.args) > len(param_registers):
+                        remaining_params = insn.args[len(param_registers):]
+
+                    for indx, arg in enumerate(insn.args[:len(param_registers)]):
                         emit(f'movq {locals.get_ref(arg)}, {param_registers[indx]}')
+
+                    if remaining_params:
+                        for param in remaining_params:
+                            emit(f'pushq {locals.get_ref(param)}')
+
                     emit(f'call {insn.fun.name}')
-                    # TODO: emit proper commands when params are more than registers
-                    # TODO: make read_int work
+                    emit(f'addq ${8*len(remaining_params)}, %rsp')
 
                 emit(f'movq %rax, {locals.get_ref(insn.dest)}')
 
@@ -156,14 +171,11 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
     emit(f'.L{ns}_end:')
     emit('')
 
-    # TODO: clean up
     if ns == 'main':
         emit(f'movq $0, %rax')
-        emit(f'movq %rbp, %rsp')
-        emit(f'popq %rbp')
-    else:
-        emit(f'movq %rbp, %rsp')
-        emit(f'popq %rbp')
+
+    emit(f'movq %rbp, %rsp')
+    emit(f'popq %rbp')
     emit(f'ret')
 
     return ''.join(line+'\n' for line in lines)
