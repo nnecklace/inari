@@ -301,7 +301,7 @@ def generate_ir(
                     var_right = visit(symbol_table, expr.right)
                     if isinstance(expr.left, UnaryOp):
                         var_left = visit(symbol_table, expr.left)
-                        #ins.append(CopyPointer(loc, var_right, var_left))
+                        ins.append(CopyPointer(loc, var_right, var_left))
                     else:
                         var_left = symbol_table.require(expr.left.name)
                         ins.append(Copy(loc, var_right, var_left))

@@ -160,7 +160,8 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
         emit(f'movq %rbp, %rsp')
         emit(f'popq %rbp')
     else:
-        emit(f'leave')
+        emit(f'movq %rbp, %rsp')
+        emit(f'popq %rbp')
     emit(f'ret')
 
     return ''.join(line+'\n' for line in lines)
