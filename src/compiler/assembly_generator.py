@@ -76,7 +76,9 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
     lines = []
     param_registers = ['%rdi', '%rsi', '%rdx', '%rcx', '%r8', '%r9']
     param_count = 0
+    loading_stack_variables = False
     stack_arg_address = 16
+    stack_vars: list[tuple[LoadBoolParam | LoadIntParam | LoadPointerParam, int]] = []
     def emit(line: str) -> None: lines.append(line)
 
     vars = get_all_ir_variables(instructions)
@@ -94,6 +96,16 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
     emit('')
 
     for insn in instructions:
+        if (not isinstance(insn, LoadIntParam) and not isinstance(insn, LoadBoolParam) and not isinstance(insn, LoadPointerParam)) and loading_stack_variables:
+            addresses = [addr for _, addr in stack_vars]
+            addresses.reverse()
+            for i, var in enumerate(stack_vars):
+                emit(f'movq {addresses[i]}(%rbp), %rax')
+                emit(f'movq %rax, {locals.get_ref(var[0].dest)}')
+            stack_vars = []
+            loading_stack_variables = False
+            stack_arg_address = 16
+
         emit('# ' + str(insn))
         match insn:
             case Label():
@@ -130,8 +142,8 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
                 if param_count < len(param_registers):
                     emit(f'movq {param_registers[param_count]}, {locals.get_ref(insn.dest)}')
                 else:
-                    emit(f'movq {stack_arg_address}(%rbp), %rax')
-                    emit(f'movq %rax, {locals.get_ref(insn.dest)}')
+                    loading_stack_variables = True
+                    stack_vars.append((insn, stack_arg_address))
                     stack_arg_address += 8
                 param_count += 1
             case Jump():
