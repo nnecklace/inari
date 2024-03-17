@@ -5,7 +5,6 @@ from compiler.location import Location
 @dataclass
 class Expression:
     """Base class for AST nodes representing expressions."""
-    # TODO: Add Location to expression
     type: Type = field(kw_only=True, default=Unit) # type: ignore[valid-type]
     location: Location = field(kw_only=True, default_factory=(lambda: Location(file='', line=0, column=0)))
 
@@ -19,7 +18,6 @@ class Module:
 @dataclass
 class Literal(Expression):
     value: int | bool | None
-    # (value=None is used when parsing the keyword `unit`)
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Literal):
             return NotImplemented

@@ -156,6 +156,7 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
     emit(f'.L{ns}_end:')
     emit('')
 
+    # TODO: clean up
     if ns == 'main':
         emit(f'movq $0, %rax')
         emit(f'movq %rbp, %rsp')

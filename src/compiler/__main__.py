@@ -7,7 +7,7 @@ from compiler.parser import parse
 from compiler.ir_generator import DataFlow, generate_blocks, generate_flow_graph, generate_ir
 from compiler.type_checker import typecheck_module
 from compiler.types import get_global_symbol_table_types
-from compiler.assembly_generator import generate_assembly, generate_ns_assembly
+from compiler.assembly_generator import generate_ns_assembly
 
 # TODO(student): add more commands as needed
 usage = f"""
