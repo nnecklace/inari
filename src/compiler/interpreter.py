@@ -15,12 +15,12 @@ def interpret(node: Expression, symbol_table: SymbolTable) -> Value:
         case FuncCall():
             func = symbol_table.require(node.name.name)
             interpreted_args = [interpret(arg, symbol_table) for arg in node.args]
-            if node.name == 'print_int' or node.name == 'print_bool':
+            if node.name.name == 'print_int' or node.name.name == 'print_bool':
                 if len(interpreted_args) != 1:
                     raise Exception(f'Function expects 1 argument, {len(interpreted_args)} given')
                 else:
                     return func(interpreted_args[0])
-            elif node.name == 'read_int':
+            elif node.name.name == 'read_int':
                 if len(interpreted_args) > 0:
                     raise Exception(f'Function expects 0 arguments, {len(interpreted_args)} given')
                 else:
