@@ -1,0 +1,24 @@
+input#fun function_name(x: Int, y: Bool): Unit { while y do { if x % 2 == 0 then break else {x = x+1;} }; print_int(x) } function_name(5, true)
+prints#6
+----------
+input#fun big(x: Int, y: Int): Unit { var n = x*y; var m = y+x; print_int(n/m) }; big(2,2); 
+prints#1
+----------
+input#fun f(): Int { if g() > 10 then 1 else 2 } fun g(): Int { h()+2 } fun h(): Int { 1 } f()
+prints#2
+----------
+input#fun f(): Int { var x: Int = g(); x } fun g(): Int { h()+2 } fun h(): Int { 1 } f()
+prints#3
+----------
+input#fun f(n: Int, m: Int): Int { n*m+100 } if 1 <= 1 then { var x = 1; var y = 2; f(x,y) } else 2
+prints#102
+----------
+input#fun funny(x: Int, y: Bool): Unit { if not y then print_bool(not not y) else print_bool(not y) } funny(0, false)
+prints#false
+----------
+input#var n: Int = 10; while n > 1 do { if n % 2 == 0 then { n = n / 2; } else { n = 3*n + 1; } } print_int(n)
+prints#1
+----------
+input#fun f(x: Bool): Unit { var y = { 1 + if x then 2 else 3 }; if y == 3 then print_int(100) else print_int(50) } f(true)
+prints#100
+----------
