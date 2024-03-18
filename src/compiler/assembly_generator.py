@@ -90,7 +90,7 @@ def generate_assembly(ns:str, instructions: list[Instruction]) -> str:
     emit(f'{ns}:')
     emit(f'pushq %rbp')
     emit(f'movq %rsp, %rbp')
-    emit(f'subq ${locals._stack_used}, %rsp')
+    emit(f'subq ${locals.stack_used()}, %rsp')
     emit('')
     emit(f'.L{ns}_start:')
     emit('')

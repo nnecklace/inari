@@ -297,6 +297,7 @@ def generate_ir(
             case BinaryOp():
                 if expr.op == '=':
                     if not isinstance(expr.left, Identifier) and (isinstance(expr.left, UnaryOp) and expr.left.op != '*'):
+                        # this check should ideally be moved to the typechecker
                         raise Exception(f'Expected left hand side of assignment in {expr.location} to be an identifier')
                     var_right = visit(symbol_table, expr.right)
                     if isinstance(expr.left, UnaryOp):

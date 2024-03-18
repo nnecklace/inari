@@ -332,3 +332,9 @@ class TokenizerTest(unittest.TestCase):
             Token(location=LL, type='identifier', text='or1'),
             Token(location=LL, type='identifier', text='or1and')
         ])
+
+    def test_tokenizer_numbers_with_spaces(self) -> None:
+        assert tokenize('123 321') == append_and_prepend_block([
+            Token(location=LL, type='int_literal', text='123'),
+            Token(location=LL, type='int_literal', text='321')
+        ])

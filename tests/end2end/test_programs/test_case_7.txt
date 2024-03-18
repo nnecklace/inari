@@ -1,0 +1,24 @@
+input#var x: Int = 34359738368; var y: Bool = true; var z = true; if y and z then print_int(x) else print_int(1)
+prints#34359738368
+----------
+input#var y: Bool = true; var z = false; if y or z then print_int(1) else print_int(2)
+prints#1
+----------
+input#fun y(x: Bool): Bool { if x then true else false } y(false)
+prints#false
+----------
+input#fun f(x: Int): Int { g(1)+h(2)+x } fun g(x: Int): Int { h(2) } fun h(x: Int): Int { k(20) } fun k(x: Int): Int { x } f(5)
+prints#45
+----------
+input#var x: Int = 2; var y = 2; fun isEven(x: Int): Bool { if x%2 == 0 then true else false } while isEven(x) and isEven(y) do { x = x+1; y = y+1; }; print_int(x)
+prints#3
+----------
+input#fun add(x: Int, y: Int): Int { x+y } add(1, add(5, add(10, add(20, 5))))
+prints#41
+----------
+input#fun print_2() { print_int(2) } fun print_3() { print_int(3) } if 2-2 == 0 then print_2() else print_3()
+prints#2
+----------
+input#fun sub(x: Int, y: Int): Int { x-y } { var x = 2; if x > 1 then sub(x,2) else 1000  }
+prints#0
+----------
