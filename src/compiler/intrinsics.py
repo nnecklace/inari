@@ -20,7 +20,6 @@ def _intrinsic(name: str) -> Callable[[Intrinsic], Intrinsic]:
         return f
     return wrapper
 
-# TODO: test functions with pointers
 @_intrinsic("unary_*")
 def unary_pointer_dereference(a: IntrinsicArgs) -> None:
     a.emit(f'movq {a.arg_refs[0]}, {a.result_register}')

@@ -15,7 +15,6 @@ def find(expr: Expression, exprs: list[tuple[Expression, Type]]) -> Type:
             return exp[1]
     return Unit 
 
-# TODO: Add more tests
 class TypeCheckerTest(unittest.TestCase):
     def test_typecheck_simple_literal_positive_int(self) -> None:
         expr = p('1')
@@ -206,6 +205,11 @@ class TypeCheckerTest(unittest.TestCase):
         expr = p('var x: Int = 20; var y: Int* = &x; fun f(z: Int*): Int* { z }; *f(y)')
         expr_types = typecheck_module(expr, get_global_symbol_table_types())
         assert find(expr.expressions[-1], expr_types) == Int
+
+    def test_typecheck_empty_block(self) -> None:
+        expr = p('{}')
+        expr_types = typecheck_module(expr, get_global_symbol_table_types())
+        assert find(expr.expressions[-1], expr_types) == Unit
 
     def test_typecheck_custom_func_args(self) -> None:
         self.assertRaises(Exception, typecheck_module, p('fun f(x: Int*): Int { 1 + *x} f(true)'), get_global_symbol_table_types())

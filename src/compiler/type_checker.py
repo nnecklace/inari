@@ -146,7 +146,6 @@ def typecheck(node: Expression, symbol_table: SymbolTable[Type]) -> Type: # type
             return return_and_assign(node, Unit)
 
         case Var():
-            # TODO: Clean this up
             variable_type = node.declared_type
             initialization_type = typecheck(node.initialization, symbol_table)
 
@@ -162,7 +161,6 @@ def typecheck(node: Expression, symbol_table: SymbolTable[Type]) -> Type: # type
             for expr in node.statements[:len(node.statements)-1]:
                 typecheck(expr, new_symbol_table)
                 
-            # TODO: most likely fails with empty statement list, actually probably not but lets remember to check
             return return_and_assign(node, typecheck(node.statements[-1], new_symbol_table))
     
     raise Exception('Unknown expression type in type checker')

@@ -11,7 +11,6 @@ from compiler.types import get_global_symbol_table, get_global_symbol_table_type
 from compiler.assembly_generator import generate_ns_assembly
 from compiler.dataflow import DataFlow, generate_blocks, generate_flow_graph
 
-# TODO(student): add more commands as needed
 usage = f"""
 Usage: {sys.argv[0]} <command> [source_code_file]
 
