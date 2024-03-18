@@ -59,10 +59,10 @@ def interpret(node: Expression, symbol_table: SymbolTable) -> Value:
                     return interpret(node.otherwise, symbol_table)
 
         case While():
-            last = None
             while interpret(node.cond, symbol_table):
-                last = interpret(node.body, symbol_table)
-            return last
+                interpret(node.body, symbol_table)
+
+            return None
 
         case Var():
             symbol_table.add_local(node.name.name, interpret(node.initialization, symbol_table))

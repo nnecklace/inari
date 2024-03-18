@@ -20,7 +20,10 @@ class InterpreterTest(unittest.TestCase):
 
     def test_interpret_simple_if_else(self) -> None:
         assert interpret_module(p('if 5 < 2 then 2*5 else 6/2'), get_global_symbol_table()) == 3
-  
+
+    def test_interpret_simple_if_else2(self) -> None:
+        assert interpret_module(p('var x = 5; if 5 <= x and x == 5 then 2*5 else 6/2'), get_global_symbol_table()) == 10
+
     def test_interpret_simple_var(self) -> None:
         sym = get_global_symbol_table()
         interpret_module(p('var a = 1'), sym)
@@ -45,13 +48,31 @@ class InterpreterTest(unittest.TestCase):
         assert interpret_module(p('var x = 1;{x=x+1}'), get_global_symbol_table()) == 2
     
     def test_interpret_simple_while(self) -> None:
-        assert interpret_module(p('var x = 1; while x<3 do {x=x+1}'), get_global_symbol_table()) == 3
+        assert interpret_module(p('var x = 1; while x<3 do {x=x+1}; x'), get_global_symbol_table()) == 3
     
     def test_interpret_simple_and(self) -> None:
         assert interpret_module(p('var some = false;var some_else = true;some and {some_else = false;true};some_else'), get_global_symbol_table()) == True
 
     def test_interpret_simple_or(self) -> None:
         assert interpret_module(p('var some = false;true or {some = true;true};some'), get_global_symbol_table()) == False
+
+    def test_interpret_simple_program(self) -> None:
+        assert interpret_module(p('var n = 10; while n > 1 do { if n % 2 == 0 then { n = n / 2; } else { n = 3*n + 1; } } n'), get_global_symbol_table()) == 1
+
+    def test_interpret_simple_program2(self) -> None:
+        assert interpret_module(p('var n = 10; while n > 1 do { if n % 2 == 0 then { n = n / 2; } else { n = 3*n + 1; } } n'), get_global_symbol_table()) == 1
+
+    def test_interpret_simple_program3(self) -> None:
+        assert interpret_module(p('var x = { var y = 1; var z = 5; if z-y >= 1 then z else y }; x'), get_global_symbol_table()) == 5
+
+    def test_interpret_simple_program4(self) -> None:
+        assert interpret_module(p('var x = 10; var y = 10+x; while y > 0 do { y = y-1; }; y'), get_global_symbol_table()) == 0
+
+    def test_interpret_simple_program5(self) -> None:
+        assert interpret_module(p('if { var x = 2; var y = true; var z = 3; while x != z do { x = x+1 }; y } then 1 else 2'), get_global_symbol_table()) == 1
+
+    def test_interpret_simple_program6(self) -> None:
+        assert interpret_module(p('var x = 10; while x >= 1 do { var y = 100; while y >= 10 do { y = y - 1; } x = x - 1 }; x'), get_global_symbol_table()) == 0
 
     @unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
     def test_interpret_simple_func_call(self, mock_stdout: io.StringIO) -> None:

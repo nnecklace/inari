@@ -96,7 +96,7 @@ class SymbolTable(Generic[T]):
         current = self
         while current:
             if name in current.bindings:
-                if new_value:
+                if new_value is not None:
                     current.bindings[name] = new_value # type: ignore[assignment]
                 return current.bindings[name]
             else:
