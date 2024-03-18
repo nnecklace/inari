@@ -48,5 +48,4 @@ def read_test_cases() -> None:
 
 class End2EndTest(unittest.TestCase):
     def test_all_cases(self) -> None:
-        return None
-        #read_test_cases()
+        read_test_cases()

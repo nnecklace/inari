@@ -227,4 +227,5 @@ print_int(**z); # prints 10
 
 #### Dataflow framework
 
-Tasks 1-4 done in chapter 8. Time ran out so, tasks 5-6 remain undone. Dataflow framework and flowgraphs have only been tested manually. Unknown at this point if, and how many, bugs are present.
+Tasks 1-4 done in chapter 8. Time ran out so, tasks 5-6 remain undone. Dataflow framework and flowgraphs have only been tested manually. Unknown at this point if, and how many, bugs are present. 
+There are many `./check.sh` errors with the dataflow namespace. There was limited time to clean that up.
