@@ -1,13 +1,15 @@
 import sys
 from compiler.assembler import assemble
 from compiler.ast import Module
+from compiler.interpreter import interpret_module
 from compiler.ir import generate_root_var_types
 from compiler.tokenizer import tokenize
 from compiler.parser import parse
-from compiler.ir_generator import DataFlow, generate_blocks, generate_flow_graph, generate_ir
+from compiler.ir_generator import generate_ir
 from compiler.type_checker import typecheck_module
-from compiler.types import get_global_symbol_table_types
+from compiler.types import get_global_symbol_table, get_global_symbol_table_types
 from compiler.assembly_generator import generate_ns_assembly
+from compiler.dataflow import DataFlow, generate_blocks, generate_flow_graph
 
 # TODO(student): add more commands as needed
 usage = f"""
@@ -51,11 +53,9 @@ def main() -> int:
     if command is None:
         print(f"Error: command argument missing\n\n{usage}", file=sys.stderr)
         return 1
-
     if command == 'interpret':
-        source_code = read_source_code()
-        ...  # TODO(student)
-
+        source = parse(tokenize(read_source_code()))
+        interpret_module(source, get_global_symbol_table())
     elif command == 'parse':
         parse(tokenize(read_source_code()))
     elif command == 'compile':
@@ -75,11 +75,6 @@ def main() -> int:
     elif command == 'flowgraph':
         source = tokenize_parse_and_typecheck(read_source_code())
         ins = generate_ir(generate_root_var_types(),source)
-        for k, v in ins.items():
-            print(f'{k}:')
-            for i in v:
-                print(i)
-            print()
 
         print()
         blocks = generate_blocks(ins)
@@ -100,18 +95,7 @@ def main() -> int:
     elif command == 'dataflow':
         source = tokenize_parse_and_typecheck(read_source_code())
         ins = generate_ir(generate_root_var_types(),source)
-        for k, v in ins.items():
-            print(f'{k}:')
-            for i in v:
-                print(i)
-            print()
-
-        print()
         blocks = generate_blocks(ins)
-        for k, bs in blocks.items():
-            for b in bs:
-                print('Printing block')
-                print(''.join(i[0].__str__()+'\n' for i in b))
 
         dataflow = DataFlow(blocks)
 

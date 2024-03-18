@@ -1,11 +1,12 @@
-from symtable import SymbolTable
+import io
 from compiler.parser import parse
 from compiler.tokenizer import tokenize
 from compiler.interpreter import interpret_module
-from compiler.types import Value, get_global_symbol_table
+from compiler.types import get_global_symbol_table
 from compiler.ast import Module
 
 import unittest
+import unittest.mock
 
 def p(input: str) -> Module:
     return parse(tokenize(input))
@@ -51,3 +52,19 @@ class InterpreterTest(unittest.TestCase):
 
     def test_interpret_simple_or(self) -> None:
         assert interpret_module(p('var some = false;true or {some = true;true};some'), get_global_symbol_table()) == False
+
+    @unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
+    def test_interpret_simple_func_call(self, mock_stdout: io.StringIO) -> None:
+        interpret_module(p('print_int(1)'), get_global_symbol_table())
+        self.assertEqual(mock_stdout.getvalue(), '1\n')
+
+    @unittest.mock.patch('sys.stdout', new_callable=io.StringIO)
+    def test_interpret_simple_func_call_bool(self, mock_stdout: io.StringIO) -> None:
+        interpret_module(p('print_bool(true)'), get_global_symbol_table())
+        self.assertEqual(mock_stdout.getvalue(), 'True\n')
+
+    def test_func_fails_with_wrong_arg_amount(self) -> None:
+        self.assertRaises(Exception, interpret_module, p('print_bool(true, 2)'), get_global_symbol_table())
+
+    def test_func_fails_with_wrong_arg_amount2(self) -> None:
+        self.assertRaises(Exception, interpret_module, p('read_int(2)'), get_global_symbol_table())
